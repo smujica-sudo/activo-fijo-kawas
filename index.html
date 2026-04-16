@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIAF 2026 - Sistema de Inteligencia de Activo Fijo</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; transition: all 0.2s; }
+        .glass-card:hover { border-color: #6366f1; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .loader { border-top-color: #6366f1; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    <header class="bg-indigo-700 text-white sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showView('dashboard')">
+                <div class="bg-white/20 p-2 rounded-lg"><i class="fa-solid fa-boxes-stacked"></i></div>
+                <h1 class="font-extrabold text-lg tracking-tight">SIAF 2026</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="showView('dashboard')" class="p-2 hover:bg-white/10 rounded-lg"><i class="fa-solid fa-house"></i></button>
+                <div id="sync-status" class="w-2 h-2 rounded-full bg-emerald-400"></div>
+            </div>
+        </div>
+    </header>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex flex-col items-center justify-center text-white">
+        <div class="loader w-12 h-12 border-4 border-white/20 rounded-full mb-4"></div>
+        <p class="font-bold tracking-widest text-xs uppercase">Sincronizando Base de Datos...</p>
+    </div>
+
+    <main class="container mx-auto px-4 py-6">
+
+        <section id="view-dashboard" class="view-section active">
+            <div class="mb-6">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="main-search" onkeyup="handleSearch(this.value)" placeholder="Buscar por marca, modelo o serie..." class="w-full pl-12 pr-4 py-4 rounded-2xl border-none shadow-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div onclick="renderCategories()" class="glass-card p-5 cursor-pointer bg-white border-b-4 border-indigo-500">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Activos Totales</p>
+                    <div id="kpi-total" class="text-3xl font-black">0</div>
+                </div>
+                <div class="glass-card p-5 border-b-4 border-emerald-500">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Operación</p>
+                    <div id="kpi-op" class="text-3xl font-black text-emerald-600">0</div>
+                </div>
+                <div class="glass-card p-5 border-b-4 border-amber-500">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">En Mantención</p>
+                    <div id="kpi-maint" class="text-3xl font-black text-amber-500">0</div>
+                </div>
+                <div class="glass-card p-5 border-b-4 border-rose-500">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">En Riesgo</p>
+                    <div id="kpi-risk" class="text-3xl font-black text-rose-500">0</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="glass-card p-6">
+                    <h3 class="font-bold text-xs uppercase text-slate-400 mb-4">Estado de la Flota</h3>
+                    <div class="h-64"><canvas id="chartEstado"></canvas></div>
+                </div>
+                <div class="glass-card p-6">
+                    <h3 class="font-bold text-xs uppercase text-slate-400 mb-4">Familias de Equipos</h3>
+                    <div class="h-64"><canvas id="chartCat"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-categories" class="view-section">
+            <h2 class="text-xl font-black mb-6 flex items-center gap-2"><i class="fa-solid fa-layer-group text-indigo-500"></i> Categorías</h2>
+            <div id="cat-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="view-items" class="view-section">
+            <div class="flex items-center gap-4 mb-6">
+                <button onclick="showView('categories')" class="bg-white p-2 rounded-xl shadow-sm"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2 id="cat-title" class="text-xl font-black"></h2>
+            </div>
+            <div id="items-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <section id="view-detail" class="view-section">
+            <div id="item-ficha" class="max-w-xl mx-auto"></div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- CONFIGURACIÓN ---
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyiDuTY8tDC24nPZNMsLh6KcEeBbeO84Bvs9nQR0ly0AbAdlPM7fqD6NH_7ZmxrPakq/exec'; 
+        let rawData = [];
+        let charts = {};
+
+        // --- INICIALIZACIÓN ---
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL);
+                rawData = await response.json();
+                document.getElementById('loading-overlay').style.display = 'none';
+                updateDashboard();
+            } catch (error) {
+                console.error("Error crítico:", error);
+                alert("Error al conectar con la base de datos.");
+            }
+        }
+
+        function showView(viewId) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        // --- LÓGICA DE DATOS ---
+        function updateDashboard() {
+            document.getElementById('kpi-total').innerText = rawData.length;
+            document.getElementById('kpi-op').innerText = rawData.filter(i => i.Estado.includes("Operacion")).length;
+            document.getElementById('kpi-maint').innerText = rawData.filter(i => i.Estado.includes("Mantencion")).length;
+            document.getElementById('kpi-risk').innerText = rawData.filter(i => i.Estado.includes("Perdido") || i.Estado.includes("Vendido")).length;
+            renderCharts();
+        }
+
+        function handleSearch(query) {
+            if (query.length < 2) return;
+            const filtered = rawData.filter(i => 
+                i.Marca.toLowerCase().includes(query.toLowerCase()) || 
+                i.Modelo.toLowerCase().includes(query.toLowerCase()) || 
+                i['N Serie'].toLowerCase().includes(query.toLowerCase())
+            );
+            renderSearchResults(filtered);
+        }
+
+        function renderSearchResults(results) {
+            document.getElementById('cat-title').innerText = "Resultados de Búsqueda";
+            const grid = document.getElementById('items-grid');
+            grid.innerHTML = results.map(i => itemCardTemplate(i)).join('');
+            showView('items');
+        }
+
+        // --- RENDERIZADO DE COMPONENTES ---
+        function renderCategories() {
+            const cats = [...new Set(rawData.map(i => i.Categoria))];
+            const grid = document.getElementById('cat-grid');
+            grid.innerHTML = cats.map(c => `
+                <div onclick="renderItems('${c}')" class="glass-card p-6 cursor-pointer flex justify-between items-center group">
+                    <div>
+                        <h4 class="font-bold text-slate-700">${c}</h4>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">${rawData.filter(i=>i.Categoria===c).length} Items</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-indigo-600"></i>
+                </div>
+            `).join('');
+            showView('categories');
+        }
+
+        function renderItems(catName) {
+            const items = rawData.filter(i => i.Categoria === catName);
+            document.getElementById('cat-title').innerText = catName;
+            const grid = document.getElementById('items-grid');
+            grid.innerHTML = items.map(i => itemCardTemplate(i)).join('');
+            showView('items');
+        }
+
+        function itemCardTemplate(i) {
+            return `
+                <div onclick="renderDetail(${i.ID})" class="glass-card p-4 cursor-pointer">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 uppercase">${i.Marca}</span>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded ${i.Estado.includes('Operacion') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span>
+                    </div>
+                    <h4 class="font-bold text-sm text-slate-800">${i.Modelo}</h4>
+                    <p class="text-[10px] text-slate-400 mt-1"><i class="fa-solid fa-barcode mr-1"></i> ${i['N Serie']}</p>
+                </div>`;
+        }
+
+        function renderDetail(id) {
+            const i = rawData.find(x => x.ID == id);
+            const ficha = document.getElementById('item-ficha');
+            ficha.innerHTML = `
+                <div class="glass-card overflow-hidden">
+                    <div class="bg-indigo-600 p-8 text-white text-center">
+                        <h2 class="text-2xl font-black">${i.Modelo}</h2>
+                        <p class="text-[10px] uppercase tracking-widest opacity-70 mt-1">${i.Categoria}</p>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-[9px] font-bold text-slate-400 uppercase">Marca</p><p class="text-sm font-bold">${i.Marca}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-[9px] font-bold text-slate-400 uppercase">Serie</p><p class="text-sm font-mono font-bold text-indigo-600">${i['N Serie']}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-[9px] font-bold text-slate-400 uppercase">Ubicación</p><p class="text-sm font-bold">${i['Ubicacion Fisica']}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-[9px] font-bold text-slate-400 uppercase">Responsable</p><p class="text-sm font-bold">${i['Sucursal Responsable']}</p></div>
+                        </div>
+                        <div class="bg-amber-50 p-4 rounded-xl border-l-4 border-amber-400 mb-6">
+                            <p class="text-[9px] font-bold text-amber-600 uppercase mb-1">Observaciones</p>
+                            <p class="text-xs italic text-slate-600 leading-relaxed">"${i.Observaciones || 'Sin observaciones registradas'}"</p>
+                        </div>
+                        <button onclick="showView('items')" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm">Volver al Listado</button>
+                    </div>
+                </div>`;
+            showView('detail');
+        }
+
+        // --- GRÁFICOS ---
+        function renderCharts() {
+            // Limpiar si ya existen
+            if (charts.estado) charts.estado.destroy();
+            if (charts.cat) charts.cat.destroy();
+
+            const estados = {}; rawData.forEach(x => estados[x.Estado] = (estados[x.Estado] || 0) + 1);
+            charts.estado = new Chart(document.getElementById('chartEstado'), {
+                type: 'doughnut',
+                data: { labels: Object.keys(estados), datasets: [{ data: Object.values(estados), backgroundColor: ['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#64748b'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } }
+            });
+
+            const categorias = {}; rawData.forEach(x => categorias[x.Categoria] = (categorias[x.Categoria] || 0) + 1);
+            charts.cat = new Chart(document.getElementById('chartCat'), {
+                type: 'bar',
+                data: { labels: Object.keys(categorias), datasets: [{ label: 'Unidades', data: Object.values(categorias), backgroundColor: '#6366f1', borderRadius: 6 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    onClick: (e, el) => { if(el.length) renderItems(Object.keys(categorias)[el[0].index]); },
+                    scales: { y: { beginAtZero: true }, x: { grid: { display: false } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        window.onload = fetchData;
+    </script>
+</body>
+</html>
