@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIAF 2026 - Navegación Inteligente</title>
+    <title>SIAF 2026 - Navegación de Precisión</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,30 +11,32 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .view-section { display: none; }
-        .view-section.active { display: block; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
-        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; transition: all 0.2s; }
-        .glass-card:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1); }
-        .breadcrumb-item::after { content: '/'; margin: 0 8px; color: #cbd5e1; }
+        .view-section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; transition: all 0.2s; cursor: pointer; }
+        .glass-card:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        /* Estilo para los breadcrumbs */
+        .breadcrumb-item::after { content: '›'; margin: 0 8px; color: #a5b4fc; font-size: 14px; }
         .breadcrumb-item:last-child::after { content: ''; }
+        .breadcrumb-link { cursor: pointer; transition: color 0.2s; }
+        .breadcrumb-link:hover { color: white; text-decoration: underline; }
     </style>
 </head>
 <body class="text-slate-900">
 
-    <header class="bg-indigo-700 text-white sticky top-0 z-50 shadow-lg">
+    <header class="bg-indigo-700 text-white sticky top-0 z-50 shadow-md">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-3 cursor-pointer" onclick="showView('dashboard')">
                 <i class="fa-solid fa-boxes-stacked text-xl"></i>
-                <h1 class="font-extrabold text-lg tracking-tighter uppercase">SIAF 2026</h1>
+                <h1 class="font-extrabold text-lg tracking-tight uppercase">SIAF 2026</h1>
             </div>
-            <div id="sync-status" class="flex items-center gap-2 text-[10px] font-bold bg-indigo-800 px-3 py-1 rounded-full">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE
+            <div class="text-[10px] font-bold bg-indigo-800 px-3 py-1 rounded-full border border-indigo-400/30">
+                <span id="items-count">0</span> ACTIVOS CARGADOS
             </div>
         </div>
-        <nav class="bg-indigo-800/50 px-4 py-2 border-t border-indigo-600">
-            <div id="breadcrumb-container" class="container mx-auto text-[10px] font-bold uppercase tracking-widest text-indigo-200 flex items-center">
-                <span class="breadcrumb-item cursor-pointer hover:text-white" onclick="showView('dashboard')">Home</span>
-            </div>
+        <nav class="bg-indigo-900/40 border-t border-indigo-600/50 px-4 py-2">
+            <div id="breadcrumb-path" class="container mx-auto flex items-center text-[10px] font-bold uppercase tracking-widest text-indigo-300">
+                </div>
         </nav>
     </header>
 
@@ -42,53 +44,50 @@
 
         <section id="view-dashboard" class="view-section active">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div onclick="filterBy('Total', 'Todos los Activos')" class="glass-card p-5 cursor-pointer border-l-4 border-indigo-500">
+                <div onclick="filterBy('Total', 'Todos los Activos')" class="glass-card p-5 border-l-4 border-indigo-500">
                     <p class="text-[10px] font-bold text-slate-400 uppercase">Activos Totales</p>
                     <div id="kpi-total" class="text-3xl font-black">---</div>
                 </div>
-                <div onclick="filterBy('Estado', 'Uso Operacion')" class="glass-card p-5 cursor-pointer border-l-4 border-emerald-500">
+                <div onclick="filterBy('Estado', 'Uso Operacion')" class="glass-card p-5 border-l-4 border-emerald-500">
                     <p class="text-[10px] font-bold text-slate-400 uppercase">Operación</p>
                     <div id="kpi-op" class="text-3xl font-black text-emerald-600">---</div>
                 </div>
-                <div onclick="filterBy('Estado', 'En Mantencion')" class="glass-card p-5 cursor-pointer border-l-4 border-amber-500">
+                <div onclick="filterBy('Estado', 'En Mantencion')" class="glass-card p-5 border-l-4 border-amber-500">
                     <p class="text-[10px] font-bold text-slate-400 uppercase">Mantención</p>
                     <div id="kpi-maint" class="text-3xl font-black text-amber-500">---</div>
                 </div>
-                <div onclick="filterBy('Riesgo', 'En Riesgo')" class="glass-card p-5 cursor-pointer border-l-4 border-rose-500">
+                <div onclick="filterBy('Riesgo', 'En Riesgo')" class="glass-card p-5 border-l-4 border-rose-500">
                     <p class="text-[10px] font-bold text-slate-400 uppercase">En Riesgo</p>
                     <div id="kpi-risk" class="text-3xl font-black text-rose-500">---</div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass-card p-6">
-                    <h3 class="font-bold text-xs uppercase text-slate-400 mb-4">Ubicaciones Principales</h3>
-                    <div class="h-64"><canvas id="chartUbicacion"></canvas></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card p-6 cursor-default">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Ubicaciones Técnicas</h3>
+                    <div class="h-64"><canvas id="chartUbi"></canvas></div>
                 </div>
-                <div onclick="renderCategories()" class="glass-card p-6 cursor-pointer">
-                    <h3 class="font-bold text-xs uppercase text-slate-400 mb-4">Categorías (Ver todas)</h3>
+                <div onclick="renderCategories()" class="glass-card p-6">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Familias de Equipos (Ver todas)</h3>
                     <div class="h-64"><canvas id="chartCat"></canvas></div>
                 </div>
             </div>
         </section>
 
-        <section id="view-explorer" class="view-section">
+        <section id="view-list" class="view-section">
             <div class="mb-6 space-y-4">
-                <h2 id="explorer-title" class="text-2xl font-black text-slate-800"></h2>
-                
+                <h2 id="list-title" class="text-2xl font-black text-slate-800 uppercase"></h2>
                 <div class="relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="explorer-search" onkeyup="liveSearch(this.value)" placeholder="Filtrar en esta lista..." class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <input type="text" id="list-search" onkeyup="searchInList(this.value)" placeholder="Buscar en esta categoría..." class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
             </div>
-            
-            <div id="items-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                </div>
+            <div id="items-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
         <section id="view-categories" class="view-section">
-            <h2 class="text-xl font-black mb-6">Categorías</h2>
-            <div id="cat-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+            <h2 class="text-xl font-black mb-6">Categorías de Activos</h2>
+            <div id="categories-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </section>
 
         <section id="view-detail" class="view-section">
@@ -98,29 +97,41 @@
     </main>
 
     <script>
+        // CONFIGURACIÓN API
         const API_URL = 'https://script.google.com/macros/s/AKfycby36cA1fdHcHZBlq3ZXh65qXzgX_c1ujI-c296gMt3e_SfzPA3tC6Mqu55DAmFeJvwj/exec'; 
         let rawData = [];
-        let currentFilteredList = [];
+        let filteredData = [];
+        let currentPath = [];
 
         async function init() {
             try {
                 const res = await fetch(API_URL);
                 rawData = await res.json();
+                document.getElementById('items-count').innerText = rawData.length;
                 updateDashboard();
-            } catch (e) { console.error(e); }
+                showView('dashboard');
+            } catch (e) { console.error("Error cargando base de datos", e); }
         }
 
-        function showView(viewId, breadcrumbs = []) {
+        // NAVEGACIÓN Y BREADCRUMBS
+        function showView(viewId, path = []) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.getElementById('view-' + viewId).classList.add('active');
             
-            // Actualizar Breadcrumbs
-            const container = document.getElementById('breadcrumb-container');
-            container.innerHTML = `<span class="breadcrumb-item cursor-pointer hover:text-white" onclick="showView('dashboard')">Home</span>`;
-            breadcrumbs.forEach((b, idx) => {
-                const isLast = idx === breadcrumbs.length - 1;
-                container.innerHTML += `<span class="breadcrumb-item ${isLast ? 'text-indigo-100' : 'cursor-pointer hover:text-white'}" ${!isLast ? `onclick="${b.action}"` : ''}>${b.name}</span>`;
+            // Construir Breadcrumbs
+            currentPath = path;
+            const breadContainer = document.getElementById('breadcrumb-path');
+            let html = `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="showView('dashboard')">Home</span></span>`;
+            
+            path.forEach((p, idx) => {
+                const isLast = idx === path.length - 1;
+                if(isLast) {
+                    html += `<span class="breadcrumb-item text-indigo-100">${p.name}</span>`;
+                } else {
+                    html += `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="${p.action}">${p.name}</span></span>`;
+                }
             });
+            breadContainer.innerHTML = html;
             window.scrollTo(0,0);
         }
 
@@ -132,25 +143,27 @@
             renderCharts();
         }
 
-        // --- FILTROS DE TARJETAS ---
+        // ACCIONES DE FILTRO (KPIs y Gráficos)
         function filterBy(type, value) {
             let list = [];
+            let pathName = value;
+
             if (type === 'Total') list = rawData;
             else if (type === 'Estado') list = rawData.filter(i => i.Estado === value);
             else if (type === 'Riesgo') list = rawData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado));
             else if (type === 'Categoria') list = rawData.filter(i => i.Categoria === value);
 
-            currentFilteredList = list;
-            document.getElementById('explorer-title').innerText = value;
-            document.getElementById('explorer-search').value = '';
-            renderList(list);
-            showView('explorer', [{name: value, action: ''}]);
+            filteredData = list;
+            document.getElementById('list-title').innerText = pathName;
+            document.getElementById('list-search').value = '';
+            renderGrid(list);
+            showView('list', [{name: pathName, action: `filterBy('${type}', '${value}')`}]);
         }
 
-        function renderList(list) {
+        function renderGrid(list) {
             const grid = document.getElementById('items-grid');
             grid.innerHTML = list.map(i => `
-                <div onclick="renderDetail(${i.ID})" class="glass-card p-4 cursor-pointer">
+                <div onclick="renderDetail(${i.ID})" class="glass-card p-4">
                     <div class="flex justify-between items-start mb-2">
                         <span class="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 uppercase">${i.Marca}</span>
                         <span class="text-[9px] font-bold px-2 py-0.5 rounded ${i.Estado === 'Uso Operacion' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span>
@@ -161,66 +174,72 @@
             `).join('');
         }
 
-        function liveSearch(query) {
-            const filtered = currentFilteredList.filter(i => 
+        function searchInList(query) {
+            const filtered = filteredData.filter(i => 
                 i.Marca.toLowerCase().includes(query.toLowerCase()) || 
                 i.Modelo.toLowerCase().includes(query.toLowerCase()) || 
                 i['N Serie'].toLowerCase().includes(query.toLowerCase())
             );
-            renderList(filtered);
+            renderGrid(filtered);
         }
 
-        // --- CATEGORÍAS ---
+        // VISTA CATEGORÍAS
         function renderCategories() {
             const cats = [...new Set(rawData.map(i => i.Categoria))];
-            const grid = document.getElementById('cat-grid');
+            const grid = document.getElementById('categories-grid');
             grid.innerHTML = cats.map(c => `
-                <div onclick="filterBy('Categoria', '${c}')" class="glass-card p-6 cursor-pointer flex justify-between items-center group">
-                    <div><h4 class="font-bold">${c}</h4><p class="text-[10px] text-slate-400">${rawData.filter(i=>i.Categoria===c).length} Items</p></div>
+                <div onclick="filterBy('Categoria', '${c}')" class="glass-card p-6 flex justify-between items-center group">
+                    <div><h4 class="font-bold text-slate-700">${c}</h4><p class="text-[10px] text-slate-400 uppercase font-bold">${rawData.filter(i=>i.Categoria===c).length} Items</p></div>
                     <i class="fa-solid fa-chevron-right text-slate-200 group-hover:text-indigo-600"></i>
                 </div>
             `).join('');
             showView('categories', [{name: 'Categorías', action: 'renderCategories()'}]);
         }
 
-        // --- DETALLE ---
+        // VISTA DETALLE
         function renderDetail(id) {
             const i = rawData.find(x => x.ID == id);
             const ficha = document.getElementById('item-ficha');
+            
+            // Creamos el path dinámico para el breadcrumb de detalle
+            let detailPath = [...currentPath, {name: i.Modelo, action: ''}];
+
             ficha.innerHTML = `
-                <div class="glass-card overflow-hidden">
+                <div class="glass-card overflow-hidden cursor-default shadow-2xl">
                     <div class="bg-indigo-600 p-8 text-white text-center">
                         <h2 class="text-2xl font-black">${i.Modelo}</h2>
-                        <p class="text-[10px] uppercase opacity-70 mt-1">${i.Categoria}</p>
+                        <p class="text-[10px] uppercase opacity-70 mt-1 tracking-widest">${i.Categoria}</p>
                     </div>
                     <div class="p-6 space-y-4">
                         <div class="grid grid-cols-2 gap-3 text-xs">
-                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">Marca</p><p class="font-bold text-sm">${i.Marca}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">Marca</p><p class="font-bold text-sm text-slate-700">${i.Marca}</p></div>
                             <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">N° Serie</p><p class="font-mono font-bold text-sm text-indigo-600">${i['N Serie']}</p></div>
-                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">Ubicación</p><p class="font-bold text-sm">${i['Ubicacion Fisica']}</p></div>
-                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">Responsable</p><p class="font-bold text-sm">${i['Sucursal Responsable']}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">Ubicación</p><p class="font-bold text-sm text-slate-700">${i['Ubicacion Fisica']}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">Responsable</p><p class="font-bold text-sm text-slate-700">${i['Sucursal Responsable']}</p></div>
                         </div>
-                        <div class="bg-amber-50 p-4 rounded-xl border-l-4 border-amber-400 text-xs text-slate-600 italic">"${i.Observaciones}"</div>
-                        <button onclick="window.history.back()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm shadow-lg">Cerrar Detalle</button>
+                        <div class="bg-amber-50 p-4 rounded-xl border-l-4 border-amber-400 text-xs text-slate-600 italic">
+                            <p class="font-bold text-amber-700 uppercase text-[9px] not-italic mb-1">Notas del Activo:</p>
+                            "${i.Observaciones || 'Sin observaciones'}"
+                        </div>
+                        <button onclick="showView('list', currentPath)" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-800 transition-colors">Volver al Listado</button>
                     </div>
                 </div>
             `;
-            showView('detail', [{name: 'Explorador', action: 'showView("explorer")'}, {name: i.Modelo, action: ''}]);
+            showView('detail', detailPath);
         }
 
         function renderCharts() {
-            // Ubicaciones
             const ubi = {}; rawData.forEach(x => ubi[x['Sucursal Responsable']] = (ubi[x['Sucursal Responsable']] || 0) + 1);
-            new Chart(document.getElementById('chartUbicacion'), {
+            new Chart(document.getElementById('chartUbi'), {
                 type: 'doughnut',
                 data: { labels: Object.keys(ubi), datasets: [{ data: Object.values(ubi), backgroundColor: ['#6366f1','#10b981','#f59e0b'] }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } }
             });
-            // Categorías
+            
             const cats = {}; rawData.forEach(x => cats[x.Categoria] = (cats[x.Categoria] || 0) + 1);
             new Chart(document.getElementById('chartCat'), {
                 type: 'bar',
-                data: { labels: Object.keys(cats).map(c => c.substring(0,10)+'...'), datasets: [{ data: Object.values(cats), backgroundColor: '#6366f1', borderRadius: 5 }] },
+                data: { labels: Object.keys(cats).map(c => c.length > 10 ? c.substring(0,10)+'...' : c), datasets: [{ data: Object.values(cats), backgroundColor: '#6366f1', borderRadius: 4 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false }, ticks: { font: { size: 8 } } } } }
             });
         }
