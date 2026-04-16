@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIAF 2026 - Navegación por Categorías</title>
+    <title>SIAF 2026 - Dashboard Inteligente</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,6 +15,7 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; transition: all 0.2s; cursor: pointer; }
         .glass-card:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1); }
+        .glass-card-no-hover { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; }
         .breadcrumb-item::after { content: '›'; margin: 0 8px; color: #a5b4fc; }
         .breadcrumb-item:last-child::after { content: ''; }
         .breadcrumb-link { cursor: pointer; }
@@ -34,4 +35,262 @@
             </div>
         </div>
         <nav class="bg-indigo-900/40 border-t border-indigo-600/50 px-4 py-2">
-            <div id="breadcrumb-path" class="container mx-auto flex items-center text-[10px] font-bold uppercase tracking-widest text-indigo-300
+            <div id="breadcrumb-path" class="container mx-auto flex items-center text-[10px] font-bold uppercase tracking-widest text-indigo-300">
+                <span class="breadcrumb-item"><span class="breadcrumb-link" onclick="showView('dashboard')">Home</span></span>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-6">
+
+        <section id="view-dashboard" class="view-section active">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div onclick="renderCategories('Todos los Activos')" class="glass-card p-5 border-l-4 border-indigo-500">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Activos Totales</p>
+                    <div id="kpi-total" class="text-3xl font-black">---</div>
+                    <p class="text-[9px] text-indigo-400 font-bold mt-2">VER CATEGORÍAS ›</p>
+                </div>
+                <div onclick="filterBy('Estado', 'Uso Operacion')" class="glass-card p-5 border-l-4 border-emerald-500">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Operación</p>
+                    <div id="kpi-op" class="text-3xl font-black text-emerald-600">---</div>
+                </div>
+                <div onclick="filterBy('Estado', 'En Mantencion')" class="glass-card p-5 border-l-4 border-amber-500">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Mantención</p>
+                    <div id="kpi-maint" class="text-3xl font-black text-amber-500">---</div>
+                </div>
+                <div onclick="filterBy('Riesgo', 'En Riesgo')" class="glass-card p-5 border-l-4 border-rose-500">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">En Riesgo</p>
+                    <div id="kpi-risk" class="text-3xl font-black text-rose-500">---</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="glass-card-no-hover p-6">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-1">Sucursal Responsable</h3>
+                    <p class="text-[9px] text-indigo-500 font-bold mb-4">TOQUE UNA SECCIÓN PARA FILTRAR</p>
+                    <div class="h-56"><canvas id="chartSucursal"></canvas></div>
+                </div>
+                <div class="glass-card-no-hover p-6">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-1">Bodegas / Ubicaciones</h3>
+                    <p class="text-[9px] text-indigo-500 font-bold mb-4">TOQUE UNA SECCIÓN PARA FILTRAR</p>
+                    <div class="h-56"><canvas id="chartFisica"></canvas></div>
+                </div>
+                <div onclick="renderCategories('Categorías')" class="glass-card p-6 border-2 border-transparent hover:border-indigo-500">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-1">Inventario por Familia</h3>
+                    <p class="text-[9px] text-indigo-500 font-bold mb-4">TOQUE PARA VER TODAS</p>
+                    <div class="h-56"><canvas id="chartCat"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-categories" class="view-section">
+            <h2 id="cat-view-title" class="text-2xl font-black text-slate-800 uppercase mb-6"></h2>
+            <div id="categories-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="view-list" class="view-section">
+            <div class="mb-6 space-y-4">
+                <h2 id="list-title" class="text-2xl font-black text-slate-800 uppercase"></h2>
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="list-search" onkeyup="searchInList(this.value)" placeholder="Buscar en esta lista (Modelo, Marca o S/N)..." class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+            </div>
+            <div id="items-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <section id="view-detail" class="view-section">
+            <div id="item-ficha" class="max-w-xl mx-auto"></div>
+        </section>
+
+    </main>
+
+    <script>
+        // CONFIGURACIÓN API
+        const API_URL = 'https://script.google.com/macros/s/AKfycby36cA1fdHcHZBlq3ZXh65qXzgX_c1ujI-c296gMt3e_SfzPA3tC6Mqu55DAmFeJvwj/exec'; // <--- ¡PEGA TU URL DE APPS SCRIPT AQUÍ!
+        let rawData = [];
+        let filteredData = [];
+        let currentPath = [];
+
+        // Instancias de Chart.js
+        let chartInstances = { sucursal: null, fisica: null, cat: null };
+
+        async function init() {
+            try {
+                const res = await fetch(API_URL);
+                rawData = await res.json();
+                document.getElementById('items-count').innerText = rawData.length;
+                updateDashboard();
+            } catch (e) { console.error("Error al cargar los datos:", e); }
+        }
+
+        // --- SISTEMA DE VISTAS Y BREADCRUMBS ---
+        function showView(viewId, path = []) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            
+            currentPath = path;
+            const breadContainer = document.getElementById('breadcrumb-path');
+            let html = `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="showView('dashboard')">Home</span></span>`;
+            
+            path.forEach((p, idx) => {
+                const isLast = idx === path.length - 1;
+                html += `<span class="breadcrumb-item ${isLast ? 'text-indigo-100' : ''}">
+                    <span class="${!isLast ? 'breadcrumb-link' : ''}" onclick="${p.action}">${p.name}</span>
+                </span>`;
+            });
+            breadContainer.innerHTML = html;
+            window.scrollTo(0,0);
+        }
+
+        function updateDashboard() {
+            document.getElementById('kpi-total').innerText = rawData.length;
+            document.getElementById('kpi-op').innerText = rawData.filter(i => i.Estado === "Uso Operacion").length;
+            document.getElementById('kpi-maint').innerText = rawData.filter(i => i.Estado === "En Mantencion").length;
+            document.getElementById('kpi-risk').innerText = rawData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado)).length;
+            renderCharts();
+        }
+
+        function renderCategories(title = "Categorías") {
+            const cats = [...new Set(rawData.map(i => i.Categoria))];
+            document.getElementById('cat-view-title').innerText = title;
+            const grid = document.getElementById('categories-grid');
+            
+            grid.innerHTML = cats.map(c => `
+                <div onclick="filterBy('Categoria', '${c}')" class="glass-card p-6 flex justify-between items-center group">
+                    <div>
+                        <h4 class="font-bold text-slate-700">${c}</h4>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">${rawData.filter(i=>i.Categoria===c).length} Items</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-200 group-hover:text-indigo-600"></i>
+                </div>
+            `).join('');
+            
+            showView('categories', [{name: title, action: `renderCategories('${title}')`}]);
+        }
+
+        // --- SISTEMA DE FILTRADO NAVEGABLE ---
+        function filterBy(type, value) {
+            let list = [];
+            
+            if (type === 'Categoria') list = rawData.filter(i => i.Categoria === value);
+            else if (type === 'Estado') list = rawData.filter(i => i.Estado === value);
+            else if (type === 'Riesgo') list = rawData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado));
+            else if (type === 'Sucursal') list = rawData.filter(i => i['Sucursal Responsable'] === value);
+            else if (type === 'Ubicacion') list = rawData.filter(i => i['Ubicacion Fisica'] === value);
+            else list = rawData;
+
+            filteredData = list;
+            document.getElementById('list-title').innerText = value;
+            document.getElementById('list-search').value = '';
+            renderGrid(list);
+
+            // Construir la ruta de migas de pan correcta según el origen del click
+            let path = [];
+            if (type === 'Categoria') {
+                path = [{name: 'Activos', action: "renderCategories('Todos los Activos')"}, {name: value, action: ""}];
+            } else {
+                path = [{name: value, action: ""}];
+            }
+            showView('list', path);
+        }
+
+        function renderGrid(list) {
+            const grid = document.getElementById('items-grid');
+            grid.innerHTML = list.map(i => `
+                <div onclick="renderDetail(${i.ID})" class="glass-card p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 uppercase">${i.Marca}</span>
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded ${i.Estado === 'Uso Operacion' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span>
+                    </div>
+                    <h4 class="font-bold text-sm text-slate-800">${i.Modelo}</h4>
+                    <p class="text-[10px] text-slate-400 mt-1"><i class="fa-solid fa-barcode mr-1"></i> S/N: ${i['N Serie']}</p>
+                </div>
+            `).join('');
+        }
+
+        function searchInList(query) {
+            const filtered = filteredData.filter(i => 
+                i.Marca.toLowerCase().includes(query.toLowerCase()) || 
+                i.Modelo.toLowerCase().includes(query.toLowerCase()) || 
+                i['N Serie'].toLowerCase().includes(query.toLowerCase())
+            );
+            renderGrid(filtered);
+        }
+
+        function renderDetail(id) {
+            const i = rawData.find(x => x.ID == id);
+            const ficha = document.getElementById('item-ficha');
+            let detailPath = [...currentPath, {name: i.Modelo, action: ""}];
+
+            ficha.innerHTML = `
+                <div class="glass-card-no-hover overflow-hidden shadow-2xl">
+                    <div class="bg-indigo-600 p-8 text-white text-center">
+                        <h2 class="text-2xl font-black">${i.Modelo}</h2>
+                        <p class="text-[10px] uppercase opacity-70 mt-1 tracking-widest">${i.Categoria}</p>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">Marca</p><p class="font-bold text-sm text-slate-700">${i.Marca}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">N° Serie</p><p class="font-mono font-bold text-sm text-indigo-600">${i['N Serie']}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">Ubic. Física</p><p class="font-bold text-sm text-slate-700">${i['Ubicacion Fisica']}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">Sucursal</p><p class="font-bold text-sm text-slate-700">${i['Sucursal Responsable']}</p></div>
+                        </div>
+                        <div class="bg-amber-50 p-4 rounded-xl border-l-4 border-amber-400 text-xs italic">"${i.Observaciones || 'Sin observaciones registradas'}"</div>
+                        <button onclick="showView('list', currentPath)" class="w-full bg-slate-900 hover:bg-slate-800 transition-colors text-white py-4 rounded-xl font-bold text-sm">Volver al Listado</button>
+                    </div>
+                </div>`;
+            showView('detail', detailPath);
+        }
+
+        // --- GRÁFICOS (Ahora con OnClick Dinámico) ---
+        function renderCharts() {
+            // Destruir gráficos previos si se recarga la data
+            Object.values(chartInstances).forEach(chart => { if (chart) chart.destroy(); });
+
+            // 1. SUCURSAL RESPONSABLE (STGO vs PV)
+            const suc = {}; rawData.forEach(x => { if(x['Sucursal Responsable']) suc[x['Sucursal Responsable']] = (suc[x['Sucursal Responsable']] || 0) + 1 });
+            chartInstances.sucursal = new Chart(document.getElementById('chartSucursal'), {
+                type: 'doughnut',
+                data: { labels: Object.keys(suc), datasets: [{ data: Object.values(suc), backgroundColor: ['#6366f1','#10b981','#f59e0b', '#ef4444'] }] },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    onClick: (e, el) => { if(el.length) filterBy('Sucursal', Object.keys(suc)[el[0].index]); },
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } 
+                }
+            });
+
+            // 2. UBICACIÓN FÍSICA (Top 5 Bodegas / Clientes)
+            const ubi = {}; rawData.forEach(x => { if(x['Ubicacion Fisica']) ubi[x['Ubicacion Fisica']] = (ubi[x['Ubicacion Fisica']] || 0) + 1 });
+            // Ordenar de mayor a menor y tomar el top 5 para no saturar el gráfico
+            let sortedUbi = Object.entries(ubi).sort((a,b) => b[1] - a[1]).slice(0, 5);
+            let ubiLabels = sortedUbi.map(u => u[0]);
+            let ubiData = sortedUbi.map(u => u[1]);
+
+            chartInstances.fisica = new Chart(document.getElementById('chartFisica'), {
+                type: 'pie',
+                data: { labels: ubiLabels, datasets: [{ data: ubiData, backgroundColor: ['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9'] }] },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    onClick: (e, el) => { if(el.length) filterBy('Ubicacion', ubiLabels[el[0].index]); },
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } 
+                }
+            });
+            
+            // 3. CATEGORÍAS
+            const cats = {}; rawData.forEach(x => cats[x.Categoria] = (cats[x.Categoria] || 0) + 1);
+            chartInstances.cat = new Chart(document.getElementById('chartCat'), {
+                type: 'bar',
+                data: { labels: Object.keys(cats).map(c => c.length > 10 ? c.substring(0,10)+'...' : c), datasets: [{ data: Object.values(cats), backgroundColor: '#6366f1', borderRadius: 4 }] },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { y: { beginAtZero: true }, x: { grid: { display: false }, ticks: { font: { size: 8 } } } } 
+                }
+            });
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
