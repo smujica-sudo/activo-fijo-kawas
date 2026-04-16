@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIAF 2026 - Inventario con Tablas</title>
+    <title>SIAF 2026 - Buscador Maestro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,22 +13,30 @@
         .view-section { display: none; }
         .view-section.active { display: block; animation: fadeIn 0.25s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Tarjetas */
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; transition: all 0.2s; cursor: pointer; }
         .glass-card:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .glass-card-static { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; }
         
+        /* Navegación */
         .breadcrumb-item::after { content: '›'; margin: 0 8px; color: #818cf8; font-weight: 400; }
         .breadcrumb-item:last-child::after { content: ''; }
         .breadcrumb-link { cursor: pointer; transition: color 0.2s; }
         .breadcrumb-link:hover { color: white; text-decoration: underline; }
 
-        /* Estilos específicos para la tabla dinámica */
+        /* Tablas Dinámicas */
         .table-container { overflow-x: auto; background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .data-table { w-full; text-left; border-collapse: collapse; min-width: 600px; }
-        .data-table th { background-color: #f8fafc; padding: 1rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 800; border-bottom: 1px solid #e2e8f0; }
+        .data-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 800px; }
+        .data-table th { background-color: #f8fafc; padding: 1rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 800; border-bottom: 1px solid #e2e8f0; cursor: pointer; user-select: none; transition: background 0.2s; }
+        .data-table th:hover { background-color: #f1f5f9; color: #4f46e5; }
         .data-table td { padding: 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         .data-table tr:last-child td { border-bottom: none; }
-        .data-table tr:hover { background-color: #fbfbfe; }
+        .data-table tr:hover { background-color: #f8fafc; }
+        
+        /* Inputs Custom */
+        .filter-input { width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; font-size: 0.875rem; outline: none; transition: all 0.2s; }
+        .filter-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
     </style>
 </head>
 <body class="text-slate-900">
@@ -37,10 +45,16 @@
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-3 cursor-pointer" onclick="popNav(-1)">
                 <i class="fa-solid fa-boxes-stacked text-xl"></i>
-                <h1 class="font-extrabold text-lg tracking-tight uppercase">SIAF 2026</h1>
+                <h1 class="font-extrabold text-lg tracking-tight uppercase hidden sm:block">SIAF 2026</h1>
             </div>
-            <div class="text-[10px] font-bold bg-indigo-800 px-3 py-1 rounded-full border border-indigo-400/30">
-                <span id="items-count">0</span> ACTIVOS ONLINE
+            
+            <div class="flex items-center gap-3">
+                <button onclick="openMasterSearch()" class="bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-inner flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass"></i> <span class="hidden sm:inline">BUSCADOR MAESTRO</span>
+                </button>
+                <div class="text-[10px] font-bold bg-indigo-800 px-3 py-1 rounded-full border border-indigo-400/30 hidden md:block">
+                    <span id="items-count">0</span> ACTIVOS ONLINE
+                </div>
             </div>
         </div>
         <nav class="bg-indigo-900/40 border-t border-indigo-600/50 px-4 py-2">
@@ -53,88 +67,75 @@
     <main class="container mx-auto px-4 py-6">
 
         <section id="view-dashboard" class="view-section active">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
                 
-                <div onclick="startNav('Inventario General', {})" class="glass-card p-5 border-l-4 border-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors">
-                    <div class="flex justify-between items-start">
-                        <p class="text-[11px] font-black text-indigo-800 uppercase tracking-wide">Inventario</p>
-                        <i class="fa-solid fa-folder-tree text-indigo-400"></i>
-                    </div>
+                <div onclick="startNav('Inventario General', {})" class="glass-card p-5 border-l-4 border-indigo-600 bg-indigo-50">
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-indigo-800 uppercase">Inventario</p><i class="fa-solid fa-folder-tree text-indigo-400"></i></div>
                     <div id="kpi-total" class="text-3xl font-black text-indigo-900 mt-1">---</div>
-                    <p class="text-[9px] text-indigo-600 font-bold mt-2 bg-indigo-200/50 inline-block px-2 py-1 rounded">CLICK PARA NAVEGAR ›</p>
+                    <p class="text-[9px] text-indigo-600 font-bold mt-2">NAVEGAR ›</p>
+                </div>
+
+                <div onclick="openMasterSearch()" class="glass-card p-5 border-l-4 border-slate-800 bg-slate-900 text-white hover:bg-slate-800">
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-slate-300 uppercase">Buscador</p><i class="fa-solid fa-search text-slate-500"></i></div>
+                    <div class="text-xl font-black mt-2 leading-tight">Filtros<br>Maestros</div>
+                    <p class="text-[9px] text-slate-400 font-bold mt-2">BUSCAR AHORA ›</p>
                 </div>
 
                 <div onclick="startNav('Operación', {Estado: 'Uso Operacion'})" class="glass-card p-5 border-l-4 border-emerald-500">
-                    <div class="flex justify-between items-start">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Operación</p>
-                        <i class="fa-solid fa-circle-check text-emerald-200"></i>
-                    </div>
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-bold text-slate-400 uppercase">Operación</p><i class="fa-solid fa-circle-check text-emerald-200"></i></div>
                     <div id="kpi-op" class="text-3xl font-black text-emerald-600 mt-1">---</div>
                 </div>
                 <div onclick="startNav('Mantención', {Estado: 'En Mantencion'})" class="glass-card p-5 border-l-4 border-amber-500">
-                    <div class="flex justify-between items-start">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Mantención</p>
-                        <i class="fa-solid fa-screwdriver-wrench text-amber-200"></i>
-                    </div>
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-bold text-slate-400 uppercase">Mantención</p><i class="fa-solid fa-screwdriver-wrench text-amber-200"></i></div>
                     <div id="kpi-maint" class="text-3xl font-black text-amber-500 mt-1">---</div>
                 </div>
                 <div onclick="startNav('En Riesgo', {Riesgo: true})" class="glass-card p-5 border-l-4 border-rose-500">
-                    <div class="flex justify-between items-start">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">En Riesgo</p>
-                        <i class="fa-solid fa-triangle-exclamation text-rose-200"></i>
-                    </div>
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-bold text-slate-400 uppercase">En Riesgo</p><i class="fa-solid fa-triangle-exclamation text-rose-200"></i></div>
                     <div id="kpi-risk" class="text-3xl font-black text-rose-500 mt-1">---</div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass-card-static p-6 cursor-pointer hover:border-indigo-500 transition-colors">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-1">Estado Operativo</h3>
-                    <p class="text-[9px] text-indigo-500 font-bold mb-4">TOQUE UN ESTADO PARA EXPLORAR</p>
-                    <div class="h-56"><canvas id="chartEstado"></canvas></div>
-                </div>
-                <div class="glass-card-static p-6 cursor-pointer hover:border-indigo-500 transition-colors">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-1">Sucursal Responsable</h3>
-                    <p class="text-[9px] text-indigo-500 font-bold mb-4">TOQUE SUCURSAL PARA EXPLORAR</p>
-                    <div class="h-56"><canvas id="chartSucursal"></canvas></div>
-                </div>
-                <div class="glass-card-static p-6 cursor-pointer hover:border-indigo-500 transition-colors">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-1">Top Bodegas / Ubicaciones</h3>
-                    <p class="text-[9px] text-indigo-500 font-bold mb-4">TOQUE UBICACIÓN PARA EXPLORAR</p>
-                    <div class="h-56"><canvas id="chartFisica"></canvas></div>
-                </div>
-                <div onclick="startNav('Todas las Categorías', {})" class="glass-card p-6 border-2 border-transparent hover:border-indigo-500">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-1">Inventario por Familia</h3>
-                    <p class="text-[9px] text-indigo-500 font-bold mb-4">TOQUE EL PANEL PARA VER TODAS</p>
-                    <div class="h-56"><canvas id="chartCat"></canvas></div>
-                </div>
+                <div class="glass-card-static p-6"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Estado Operativo</h3><div class="h-56"><canvas id="chartEstado"></canvas></div></div>
+                <div class="glass-card-static p-6"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Sucursal Responsable</h3><div class="h-56"><canvas id="chartSucursal"></canvas></div></div>
+                <div class="glass-card-static p-6"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Top Bodegas / Ubicaciones</h3><div class="h-56"><canvas id="chartFisica"></canvas></div></div>
+                <div onclick="startNav('Todas las Categorías', {})" class="glass-card p-6 border-2 border-transparent hover:border-indigo-500"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Inventario por Familia</h3><div class="h-56"><canvas id="chartCat"></canvas></div></div>
             </div>
         </section>
 
+        <section id="view-search" class="view-section">
+            <h2 class="text-2xl font-black text-slate-800 uppercase mb-1">Buscador Maestro de Activos</h2>
+            <p class="text-xs font-bold text-slate-400 mb-6">Utilice los filtros o haga clic en las cabeceras de la tabla para ordenar.</p>
+            
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="relative md:col-span-1">
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="ms-text" onkeyup="applyMasterFilters()" placeholder="Buscar Modelo, Serie o Marca..." class="filter-input pl-10">
+                </div>
+                <div><select id="ms-cat" onchange="applyMasterFilters()" class="filter-input"><option value="">Todas las Categorías</option></select></div>
+                <div><select id="ms-est" onchange="applyMasterFilters()" class="filter-input"><option value="">Todos los Estados</option></select></div>
+                <div><select id="ms-suc" onchange="applyMasterFilters()" class="filter-input"><option value="">Todas las Sucursales</option></select></div>
+            </div>
+
+            <div id="table-master-container" class="table-container"></div>
+        </section>
+
         <section id="view-categories" class="view-section">
-            <h2 id="title-categories" class="text-2xl font-black text-slate-800 uppercase mb-2"></h2>
-            <p class="text-xs font-bold text-slate-400 mb-6 tracking-wide">Paso 1: Seleccione una familia de equipos</p>
+            <h2 id="title-categories" class="text-2xl font-black text-slate-800 uppercase mb-6"></h2>
             <div id="grid-categories" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </section>
 
         <section id="view-subcategories" class="view-section">
-            <h2 id="title-subcategories" class="text-2xl font-black text-slate-800 uppercase mb-2"></h2>
-            <p class="text-xs font-bold text-slate-400 mb-6 tracking-wide">Paso 2: Seleccione una Marca / Fabricante</p>
+            <h2 id="title-subcategories" class="text-2xl font-black text-slate-800 uppercase mb-6"></h2>
             <div id="grid-subcategories" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </section>
 
         <section id="view-materials" class="view-section">
             <div class="mb-6 space-y-4">
                 <h2 id="title-materials" class="text-2xl font-black text-slate-800 uppercase mb-1"></h2>
-                <p class="text-xs font-bold text-slate-400 tracking-wide">Paso 3: Listado de Activos / Equipos</p>
-                <div class="relative mt-4">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="search-materials" onkeyup="searchMaterials(this.value)" placeholder="Buscar por Modelo o Serie en esta tabla..." class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
+                <input type="text" id="search-materials" onkeyup="searchMaterials(this.value)" placeholder="Filtrar en esta lista específica..." class="filter-input">
             </div>
-            
-            <div id="table-materials-container" class="table-container">
-                </div>
+            <div id="table-materials-container" class="table-container"></div>
         </section>
 
         <section id="view-detail" class="view-section">
@@ -150,38 +151,21 @@
         let currentFilteredData = [];
         let chartInstances = { estado: null, sucursal: null, fisica: null, cat: null };
 
+        // Variables del Buscador Maestro
+        let masterFilteredData = [];
+        let currentSort = { column: 'ID', asc: true };
+
         async function init() {
             try {
                 const res = await fetch(API_URL);
                 rawData = await res.json();
                 document.getElementById('items-count').innerText = rawData.length;
                 updateDashboard();
+                populateMasterDropdowns();
             } catch (e) { console.error("Error API", e); }
         }
 
-        function updateDashboard() {
-            document.getElementById('kpi-total').innerText = rawData.length;
-            document.getElementById('kpi-op').innerText = rawData.filter(i => i.Estado === "Uso Operacion").length;
-            document.getElementById('kpi-maint').innerText = rawData.filter(i => i.Estado === "En Mantencion").length;
-            document.getElementById('kpi-risk').innerText = rawData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado)).length;
-            renderCharts();
-        }
-
-        function startNav(title, initialQuery) {
-            navStack = [{ title: title, query: initialQuery, view: 'categories' }];
-            processNavState();
-        }
-
-        function pushNav(title, queryFilter, viewTarget) {
-            let lastQuery = navStack[navStack.length - 1].query;
-            navStack.push({
-                title: title,
-                query: { ...lastQuery, ...queryFilter },
-                view: viewTarget
-            });
-            processNavState();
-        }
-
+        // --- SISTEMA DE NAVEGACIÓN JERÁRQUICA ---
         function popNav(index) {
             if (index === -1) {
                 navStack = []; 
@@ -195,25 +179,22 @@
             processNavState();
         }
 
+        function startNav(title, query) { navStack = [{ title, query, view: 'categories' }]; processNavState(); }
+        function pushNav(title, query, view) { navStack.push({ title, query: { ...navStack[navStack.length-1].query, ...query }, view }); processNavState(); }
+
         function processNavState() {
             let current = navStack[navStack.length - 1];
-
             currentFilteredData = rawData.filter(item => {
                 for (let key in current.query) {
-                    if (key === 'Riesgo') {
-                        if (!["Perdido", "Vendido", "Pendiente"].includes(item.Estado)) return false;
-                    } else if (item[key] !== current.query[key]) {
-                        return false;
-                    }
-                }
-                return true;
+                    if (key === 'Riesgo') { if (!["Perdido", "Vendido", "Pendiente"].includes(item.Estado)) return false; } 
+                    else if (item[key] !== current.query[key]) return false;
+                } return true;
             });
 
             let breadHtml = `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="popNav(-1)">Home</span></span>`;
             navStack.forEach((step, idx) => {
-                const isLast = idx === navStack.length - 1;
-                breadHtml += `<span class="breadcrumb-item ${isLast ? 'text-white' : ''}">
-                    <span class="${!isLast ? 'breadcrumb-link text-indigo-300' : ''}" onclick="popNav(${idx})">${step.title}</span>
+                breadHtml += `<span class="breadcrumb-item ${idx === navStack.length - 1 ? 'text-white' : ''}">
+                    <span class="${idx !== navStack.length - 1 ? 'breadcrumb-link text-indigo-300' : ''}" onclick="popNav(${idx})">${step.title}</span>
                 </span>`;
             });
             document.getElementById('breadcrumb-path').innerHTML = breadHtml;
@@ -222,87 +203,107 @@
             document.getElementById('view-' + current.view).classList.add('active');
             window.scrollTo(0,0);
 
-            if (current.view === 'categories') {
-                document.getElementById('title-categories').innerText = current.title;
-                renderCategoriesGrid();
-            } else if (current.view === 'subcategories') {
-                document.getElementById('title-subcategories').innerText = current.title;
-                renderSubcategoriesGrid();
-            } else if (current.view === 'materials') {
-                document.getElementById('title-materials').innerText = current.title;
-                document.getElementById('search-materials').value = '';
-                renderMaterialsTable(currentFilteredData);
-            }
+            if (current.view === 'categories') { document.getElementById('title-categories').innerText = current.title; renderCategoriesGrid(); }
+            else if (current.view === 'subcategories') { document.getElementById('title-subcategories').innerText = current.title; renderSubcategoriesGrid(); }
+            else if (current.view === 'materials') { document.getElementById('title-materials').innerText = current.title; document.getElementById('search-materials').value = ''; renderMaterialsTable(currentFilteredData); }
+            else if (current.view === 'search') { /* Master search handled separately */ }
         }
 
-        function renderCategoriesGrid() {
-            const cats = [...new Set(currentFilteredData.map(i => i.Categoria))];
-            const grid = document.getElementById('grid-categories');
-            grid.innerHTML = cats.map(c => {
-                let count = currentFilteredData.filter(i => i.Categoria === c).length;
-                return `
-                <div onclick="pushNav('${c}', {Categoria: '${c}'}, 'subcategories')" class="glass-card p-6 flex justify-between items-center group">
-                    <div>
-                        <h4 class="font-bold text-slate-700">${c}</h4>
-                        <p class="text-[10px] text-indigo-500 uppercase font-bold">${count} Items</p>
-                    </div>
-                    <i class="fa-solid fa-folder-open text-slate-200 group-hover:text-indigo-600 text-xl"></i>
-                </div>`;
-            }).join('');
+        // --- BUSCADOR MAESTRO (NUEVO) ---
+        function populateMasterDropdowns() {
+            const populate = (id, field) => {
+                const unique = [...new Set(rawData.map(i => i[field]).filter(Boolean))].sort();
+                document.getElementById(id).innerHTML += unique.map(val => `<option value="${val}">${val}</option>`).join('');
+            };
+            populate('ms-cat', 'Categoria');
+            populate('ms-est', 'Estado');
+            populate('ms-suc', 'Sucursal Responsable');
         }
 
-        function renderSubcategoriesGrid() {
-            const marcas = [...new Set(currentFilteredData.map(i => i.Marca || 'Genérico'))];
-            const grid = document.getElementById('grid-subcategories');
-            grid.innerHTML = marcas.map(m => {
-                let count = currentFilteredData.filter(i => (i.Marca || 'Genérico') === m).length;
-                return `
-                <div onclick="pushNav('${m}', {Marca: '${m === 'Genérico' ? '' : m}'}, 'materials')" class="glass-card p-6 flex justify-between items-center group">
-                    <div>
-                        <span class="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 uppercase mb-2 inline-block">FABRICANTE / MARCA</span>
-                        <h4 class="font-bold text-slate-800">${m}</h4>
-                        <p class="text-[10px] text-slate-400 uppercase font-bold">${count} Modelos</p>
-                    </div>
-                    <i class="fa-solid fa-tag text-slate-200 group-hover:text-indigo-600"></i>
-                </div>`;
-            }).join('');
-        }
-
-        // --- NUEVA FUNCIÓN PARA TABLA DINÁMICA ---
-        function renderMaterialsTable(list) {
-            const container = document.getElementById('table-materials-container');
+        function openMasterSearch() {
+            navStack = [{ title: 'Buscador Maestro', query: {}, view: 'search' }];
+            // Reset filtros
+            document.getElementById('ms-text').value = '';
+            document.getElementById('ms-cat').value = '';
+            document.getElementById('ms-est').value = '';
+            document.getElementById('ms-suc').value = '';
             
-            if (list.length === 0) {
-                container.innerHTML = '<div class="p-8 text-center text-slate-500"><i class="fa-solid fa-box-open text-3xl mb-3 opacity-30"></i><p>No se encontraron equipos.</p></div>';
+            masterFilteredData = [...rawData];
+            applyMasterFilters(); // Aplica y dibuja la tabla
+            processNavState();
+        }
+
+        function applyMasterFilters() {
+            const text = document.getElementById('ms-text').value.toLowerCase();
+            const cat = document.getElementById('ms-cat').value;
+            const est = document.getElementById('ms-est').value;
+            const suc = document.getElementById('ms-suc').value;
+
+            masterFilteredData = rawData.filter(i => {
+                const matchText = (i.Modelo||'').toLowerCase().includes(text) || (i.Marca||'').toLowerCase().includes(text) || (i['N Serie']||'').toLowerCase().includes(text);
+                const matchCat = cat === "" || i.Categoria === cat;
+                const matchEst = est === "" || i.Estado === est;
+                const matchSuc = suc === "" || i['Sucursal Responsable'] === suc;
+                return matchText && matchCat && matchEst && matchSuc;
+            });
+            sortMasterTable(currentSort.column, false); // Reordena y dibuja
+        }
+
+        function sortMasterTable(column, toggle = true) {
+            if (toggle) {
+                currentSort.asc = (currentSort.column === column) ? !currentSort.asc : true;
+                currentSort.column = column;
+            }
+            
+            masterFilteredData.sort((a, b) => {
+                let valA = (a[column] || '').toString().toLowerCase();
+                let valB = (b[column] || '').toString().toLowerCase();
+                if (valA < valB) return currentSort.asc ? -1 : 1;
+                if (valA > valB) return currentSort.asc ? 1 : -1;
+                return 0;
+            });
+
+            drawMasterTable();
+        }
+
+        function getSortIcon(col) {
+            if (currentSort.column !== col) return '<i class="fa-solid fa-sort text-slate-300 ml-1"></i>';
+            return currentSort.asc ? '<i class="fa-solid fa-sort-up text-indigo-600 ml-1"></i>' : '<i class="fa-solid fa-sort-down text-indigo-600 ml-1"></i>';
+        }
+
+        function drawMasterTable() {
+            const container = document.getElementById('table-master-container');
+            if (masterFilteredData.length === 0) {
+                container.innerHTML = '<div class="p-8 text-center text-slate-500"><i class="fa-solid fa-box-open text-3xl mb-3 opacity-30"></i><p>No se encontraron equipos con estos filtros.</p></div>';
                 return;
             }
 
             let html = `
-                <table class="w-full text-left border-collapse min-w-[600px]">
+                <table class="data-table">
                     <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-500">
-                            <th class="p-4 font-bold rounded-tl-xl">Marca</th>
-                            <th class="p-4 font-bold">Modelo</th>
-                            <th class="p-4 font-bold">N° Serie</th>
-                            <th class="p-4 font-bold">Estado</th>
-                            <th class="p-4 font-bold text-center rounded-tr-xl">Acción</th>
+                        <tr>
+                            <th onclick="sortMasterTable('Marca')">Marca ${getSortIcon('Marca')}</th>
+                            <th onclick="sortMasterTable('Modelo')">Modelo ${getSortIcon('Modelo')}</th>
+                            <th onclick="sortMasterTable('N Serie')">N° Serie ${getSortIcon('N Serie')}</th>
+                            <th onclick="sortMasterTable('Categoria')">Categoría ${getSortIcon('Categoria')}</th>
+                            <th onclick="sortMasterTable('Estado')">Estado ${getSortIcon('Estado')}</th>
+                            <th onclick="sortMasterTable('Sucursal Responsable')">Sucursal ${getSortIcon('Sucursal Responsable')}</th>
+                            <th class="text-center">Ficha</th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm divide-y divide-slate-100">
+                    <tbody class="text-sm">
             `;
 
-            html += list.map(i => `
-                <tr class="hover:bg-indigo-50/50 transition-colors group">
-                    <td class="p-4 font-semibold text-slate-600">${i.Marca || 'Genérico'}</td>
-                    <td class="p-4 font-bold text-slate-900">${i.Modelo}</td>
-                    <td class="p-4 font-mono text-xs text-indigo-600 font-semibold">${i['N Serie'] || 'No Registrado'}</td>
-                    <td class="p-4">
-                        <span class="text-[10px] font-bold px-3 py-1 rounded-full ${i.Estado === 'Uso Operacion' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span>
-                    </td>
-                    <td class="p-4 text-center">
-                        <button onclick="pushNav('${i.Modelo.replace(/'/g, "\\'")}', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold px-4 py-2 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors border border-indigo-100">
-                            Ficha <i class="fa-solid fa-arrow-right ml-1"></i>
-                        </button>
+            html += masterFilteredData.map(i => `
+                <tr>
+                    <td class="font-semibold text-slate-600">${i.Marca || 'Genérico'}</td>
+                    <td class="font-bold text-slate-900">${i.Modelo}</td>
+                    <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || '---'}</td>
+                    <td class="text-xs text-slate-500">${i.Categoria}</td>
+                    <td><span class="text-[9px] font-bold px-2 py-1 rounded-full ${i.Estado === 'Uso Operacion' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span></td>
+                    <td class="text-xs">${i['Sucursal Responsable'] || '---'}</td>
+                    <td class="text-center">
+                        <button onclick="pushNav('${i.Modelo.replace(/'/g, "\\'")}', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 hover:text-white hover:bg-indigo-600 text-xs font-bold px-3 py-1 rounded transition-colors border border-indigo-200">Ver</button>
                     </td>
                 </tr>
             `).join('');
@@ -311,104 +312,79 @@
             container.innerHTML = html;
         }
 
-        function searchMaterials(query) {
-            const list = currentFilteredData.filter(i => 
-                (i.Modelo || '').toLowerCase().includes(query.toLowerCase()) || 
-                (i['N Serie'] || '').toLowerCase().includes(query.toLowerCase()) ||
-                (i.Marca || '').toLowerCase().includes(query.toLowerCase())
-            );
-            renderMaterialsTable(list);
+        // --- RENDERIZADO DE NIVELES (1,2,3,4) ---
+        function renderCategoriesGrid() {
+            const cats = [...new Set(currentFilteredData.map(i => i.Categoria))];
+            document.getElementById('grid-categories').innerHTML = cats.map(c => `
+                <div onclick="pushNav('${c}', {Categoria: '${c}'}, 'subcategories')" class="glass-card p-6 flex justify-between items-center">
+                    <div><h4 class="font-bold text-slate-700">${c}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${currentFilteredData.filter(i=>i.Categoria===c).length} Items</p></div>
+                    <i class="fa-solid fa-folder-open text-slate-200"></i>
+                </div>`).join('');
+        }
+
+        function renderSubcategoriesGrid() {
+            const marcas = [...new Set(currentFilteredData.map(i => i.Marca || 'Genérico'))];
+            document.getElementById('grid-subcategories').innerHTML = marcas.map(m => `
+                <div onclick="pushNav('${m}', {Marca: '${m === 'Genérico' ? '' : m}'}, 'materials')" class="glass-card p-6 flex justify-between items-center">
+                    <div><span class="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 mb-2 inline-block">FABRICANTE</span><h4 class="font-bold text-slate-800">${m}</h4></div>
+                    <i class="fa-solid fa-tag text-slate-200"></i>
+                </div>`).join('');
+        }
+
+        function renderMaterialsTable(list) {
+            const container = document.getElementById('table-materials-container');
+            if (list.length === 0) { container.innerHTML = '<div class="p-6 text-center text-slate-500">Vacío.</div>'; return; }
+            let html = `<table class="data-table"><thead><tr><th>Marca</th><th>Modelo</th><th>N° Serie</th><th>Estado</th><th class="text-center">Acción</th></tr></thead><tbody>`;
+            html += list.map(i => `<tr>
+                    <td class="font-semibold text-slate-600">${i.Marca || 'Genérico'}</td>
+                    <td class="font-bold text-slate-900">${i.Modelo}</td>
+                    <td class="font-mono text-xs text-indigo-600">${i['N Serie']}</td>
+                    <td><span class="text-[9px] font-bold px-2 py-1 rounded-full ${i.Estado === 'Uso Operacion' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span></td>
+                    <td class="text-center"><button onclick="pushNav('${i.Modelo.replace(/'/g, "\\'")}', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 bg-indigo-50 px-3 py-1 rounded font-bold text-xs">Ficha</button></td>
+                </tr>`).join('');
+            container.innerHTML = html + `</tbody></table>`;
+        }
+
+        function searchMaterials(q) {
+            renderMaterialsTable(currentFilteredData.filter(i => (i.Modelo||'').toLowerCase().includes(q.toLowerCase()) || (i['N Serie']||'').toLowerCase().includes(q.toLowerCase())));
         }
 
         function renderDetail() {
             const i = currentFilteredData[0];
-            const ficha = document.getElementById('item-ficha');
-            ficha.innerHTML = `
+            document.getElementById('item-ficha').innerHTML = `
                 <div class="glass-card-static overflow-hidden shadow-2xl">
-                    <div class="bg-indigo-600 p-8 text-white text-center relative">
-                        <i class="fa-solid fa-microchip absolute top-4 right-4 opacity-20 text-4xl"></i>
-                        <h2 class="text-2xl font-black">${i.Modelo}</h2>
-                        <p class="text-[10px] uppercase tracking-widest opacity-80 mt-1">${i.Categoria} | ${i.Marca}</p>
-                    </div>
+                    <div class="bg-indigo-600 p-8 text-white text-center"><h2 class="text-2xl font-black">${i.Modelo}</h2><p class="text-[10px] uppercase opacity-80 mt-1">${i.Categoria}</p></div>
                     <div class="p-6 space-y-4">
                         <div class="grid grid-cols-2 gap-3 text-xs">
                             <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">S/N (Serie)</p><p class="font-mono font-bold text-sm text-indigo-600">${i['N Serie']}</p></div>
-                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Condición</p><p class="font-bold text-sm text-slate-700">${i.Condicion}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Estado</p><p class="font-bold text-sm text-slate-700">${i.Estado}</p></div>
                             <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Ubicación Física</p><p class="font-bold text-sm text-slate-700">${i['Ubicacion Fisica']}</p></div>
-                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Sucursal (Resp)</p><p class="font-bold text-sm text-slate-700">${i['Sucursal Responsable']}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Sucursal</p><p class="font-bold text-sm text-slate-700">${i['Sucursal Responsable']}</p></div>
                         </div>
-                        <div class="bg-amber-50 p-4 rounded-xl border-l-4 border-amber-400 text-xs italic">
-                            <p class="font-bold text-amber-700 uppercase text-[9px] not-italic mb-1">Observaciones</p>
-                            "${i.Observaciones || 'Sin observaciones registradas'}"
-                        </div>
+                        <div class="bg-amber-50 p-4 rounded-xl border-l-4 border-amber-400 text-xs italic">"${i.Observaciones || 'Sin observaciones'}"</div>
                     </div>
                 </div>
-                <div class="mt-4">
-                    <button onclick="popNav(navStack.length - 2)" class="w-full bg-slate-900 hover:bg-slate-800 transition-colors text-white py-4 rounded-xl font-bold text-sm shadow-lg"><i class="fa-solid fa-arrow-left mr-2"></i> Volver a la Tabla</button>
-                </div>`;
+                <div class="mt-4"><button onclick="popNav(navStack.length - 2)" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm">Volver</button></div>`;
         }
 
-        function renderCharts() {
-            Object.values(chartInstances).forEach(chart => { if (chart) chart.destroy(); });
-
-            // 1. ESTADO
-            const est = {}; rawData.forEach(x => { if(x.Estado) est[x.Estado] = (est[x.Estado] || 0) + 1 });
-            chartInstances.estado = new Chart(document.getElementById('chartEstado'), {
-                type: 'doughnut',
-                data: { labels: Object.keys(est), datasets: [{ data: Object.values(est), backgroundColor: ['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#64748b'] }] },
-                options: { responsive: true, maintainAspectRatio: false, 
-                    onClick: (e, el) => { if(el.length) startNav(`Estado: ${Object.keys(est)[el[0].index]}`, {'Estado': Object.keys(est)[el[0].index]}); },
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } 
-                }
-            });
-
-            // 2. SUCURSAL
-            const suc = {}; rawData.forEach(x => { if(x['Sucursal Responsable']) suc[x['Sucursal Responsable']] = (suc[x['Sucursal Responsable']] || 0) + 1 });
-            chartInstances.sucursal = new Chart(document.getElementById('chartSucursal'), {
-                type: 'doughnut',
-                data: { labels: Object.keys(suc), datasets: [{ data: Object.values(suc), backgroundColor: ['#6366f1','#10b981','#f59e0b', '#ef4444'] }] },
-                options: { responsive: true, maintainAspectRatio: false, 
-                    onClick: (e, el) => { if(el.length) startNav(`Sede ${Object.keys(suc)[el[0].index]}`, {'Sucursal Responsable': Object.keys(suc)[el[0].index]}); },
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } 
-                }
-            });
-
-            // 3. FÍSICA
-            const ubi = {}; rawData.forEach(x => { if(x['Ubicacion Fisica']) ubi[x['Ubicacion Fisica']] = (ubi[x['Ubicacion Fisica']] || 0) + 1 });
-            let sortedUbi = Object.entries(ubi).sort((a,b) => b[1] - a[1]).slice(0, 5);
-            let ubiLabels = sortedUbi.map(u => u[0]);
-            let ubiData = sortedUbi.map(u => u[1]);
-
-            chartInstances.fisica = new Chart(document.getElementById('chartFisica'), {
-                type: 'pie',
-                data: { labels: ubiLabels, datasets: [{ data: ubiData, backgroundColor: ['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9'] }] },
-                options: { responsive: true, maintainAspectRatio: false, 
-                    onClick: (e, el) => { if(el.length) startNav(`Bodega: ${ubiLabels[el[0].index]}`, {'Ubicacion Fisica': ubiLabels[el[0].index]}); },
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } 
-                }
-            });
+        function updateDashboard() {
+            document.getElementById('kpi-total').innerText = rawData.length;
+            document.getElementById('kpi-op').innerText = rawData.filter(i => i.Estado === "Uso Operacion").length;
+            document.getElementById('kpi-maint').innerText = rawData.filter(i => i.Estado === "En Mantencion").length;
+            document.getElementById('kpi-risk').innerText = rawData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado)).length;
+            // Configuración básica de gráficos...
+            const ctxE = document.getElementById('chartEstado'), ctxS = document.getElementById('chartSucursal'), ctxF = document.getElementById('chartFisica'), ctxC = document.getElementById('chartCat');
+            if(chartInstances.estado) Object.values(chartInstances).forEach(c => c.destroy());
             
-            // 4. CATEGORÍAS
-            const cats = {}; rawData.forEach(x => cats[x.Categoria] = (cats[x.Categoria] || 0) + 1);
-            let catLabels = Object.keys(cats);
-            chartInstances.cat = new Chart(document.getElementById('chartCat'), {
-                type: 'bar',
-                data: { labels: catLabels.map(c => c.length > 10 ? c.substring(0,10)+'...' : c), datasets: [{ data: Object.values(cats), backgroundColor: '#6366f1', borderRadius: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, 
-                    onClick: (e, el) => { 
-                        if(el.length) {
-                            let selectedCat = catLabels[el[0].index];
-                            navStack = [
-                                { title: 'Inventario', query: {}, view: 'categories' }, 
-                                { title: selectedCat, query: {Categoria: selectedCat}, view: 'subcategories' }
-                            ];
-                            processNavState();
-                        }
-                    },
-                    plugins: { legend: { display: false } }, 
-                    scales: { y: { beginAtZero: true }, x: { grid: { display: false }, ticks: { font: { size: 8 } } } } 
-                }
-            });
+            const getCounts = (key) => rawData.reduce((acc, i) => { if(i[key]) acc[i[key]] = (acc[i[key]]||0)+1; return acc; }, {});
+            
+            chartInstances.estado = new Chart(ctxE, { type:'doughnut', data:{ labels:Object.keys(getCounts('Estado')), datasets:[{data:Object.values(getCounts('Estado')), backgroundColor:['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6']}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}}} });
+            chartInstances.sucursal = new Chart(ctxS, { type:'doughnut', data:{ labels:Object.keys(getCounts('Sucursal Responsable')), datasets:[{data:Object.values(getCounts('Sucursal Responsable')), backgroundColor:['#6366f1','#10b981','#f59e0b']}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}}} });
+            
+            let ubi = getCounts('Ubicacion Fisica'), topUbi = Object.entries(ubi).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            chartInstances.fisica = new Chart(ctxF, { type:'pie', data:{ labels:topUbi.map(u=>u[0]), datasets:[{data:topUbi.map(u=>u[1]), backgroundColor:['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9']}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}}} });
+            
+            chartInstances.cat = new Chart(ctxC, { type:'bar', data:{ labels:Object.keys(getCounts('Categoria')).map(c=>c.substring(0,10)+'.'), datasets:[{data:Object.values(getCounts('Categoria')), backgroundColor:'#6366f1'}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}}} });
         }
 
         window.onload = init;
