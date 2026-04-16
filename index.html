@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIAF 2026 - Buscador Maestro</title>
+    <title>SIAF 2026 - Buscador y Detalles</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,18 +14,15 @@
         .view-section.active { display: block; animation: fadeIn 0.25s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Tarjetas */
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; transition: all 0.2s; cursor: pointer; }
         .glass-card:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .glass-card-static { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; }
         
-        /* Navegación */
         .breadcrumb-item::after { content: '›'; margin: 0 8px; color: #818cf8; font-weight: 400; }
         .breadcrumb-item:last-child::after { content: ''; }
         .breadcrumb-link { cursor: pointer; transition: color 0.2s; }
         .breadcrumb-link:hover { color: white; text-decoration: underline; }
 
-        /* Tablas Dinámicas */
         .table-container { overflow-x: auto; background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .data-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 800px; }
         .data-table th { background-color: #f8fafc; padding: 1rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 800; border-bottom: 1px solid #e2e8f0; cursor: pointer; user-select: none; transition: background 0.2s; }
@@ -34,7 +31,6 @@
         .data-table tr:last-child td { border-bottom: none; }
         .data-table tr:hover { background-color: #f8fafc; }
         
-        /* Inputs Custom */
         .filter-input { width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; font-size: 0.875rem; outline: none; transition: all 0.2s; }
         .filter-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
     </style>
@@ -68,7 +64,6 @@
 
         <section id="view-dashboard" class="view-section active">
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-                
                 <div onclick="startNav('Inventario General', {})" class="glass-card p-5 border-l-4 border-indigo-600 bg-indigo-50">
                     <div class="flex justify-between items-start"><p class="text-[10px] font-black text-indigo-800 uppercase">Inventario</p><i class="fa-solid fa-folder-tree text-indigo-400"></i></div>
                     <div id="kpi-total" class="text-3xl font-black text-indigo-900 mt-1">---</div>
@@ -139,7 +134,7 @@
         </section>
 
         <section id="view-detail" class="view-section">
-            <div id="item-ficha" class="max-w-xl mx-auto"></div>
+            <div id="item-ficha" class="max-w-4xl mx-auto"></div>
         </section>
 
     </main>
@@ -150,8 +145,6 @@
         let navStack = []; 
         let currentFilteredData = [];
         let chartInstances = { estado: null, sucursal: null, fisica: null, cat: null };
-
-        // Variables del Buscador Maestro
         let masterFilteredData = [];
         let currentSort = { column: 'ID', asc: true };
 
@@ -165,7 +158,6 @@
             } catch (e) { console.error("Error API", e); }
         }
 
-        // --- SISTEMA DE NAVEGACIÓN JERÁRQUICA ---
         function popNav(index) {
             if (index === -1) {
                 navStack = []; 
@@ -206,10 +198,10 @@
             if (current.view === 'categories') { document.getElementById('title-categories').innerText = current.title; renderCategoriesGrid(); }
             else if (current.view === 'subcategories') { document.getElementById('title-subcategories').innerText = current.title; renderSubcategoriesGrid(); }
             else if (current.view === 'materials') { document.getElementById('title-materials').innerText = current.title; document.getElementById('search-materials').value = ''; renderMaterialsTable(currentFilteredData); }
-            else if (current.view === 'search') { /* Master search handled separately */ }
+            else if (current.view === 'search') { /* Master search handled */ }
+            else if (current.view === 'detail') { renderDetail(); }
         }
 
-        // --- BUSCADOR MAESTRO (NUEVO) ---
         function populateMasterDropdowns() {
             const populate = (id, field) => {
                 const unique = [...new Set(rawData.map(i => i[field]).filter(Boolean))].sort();
@@ -222,14 +214,12 @@
 
         function openMasterSearch() {
             navStack = [{ title: 'Buscador Maestro', query: {}, view: 'search' }];
-            // Reset filtros
             document.getElementById('ms-text').value = '';
             document.getElementById('ms-cat').value = '';
             document.getElementById('ms-est').value = '';
             document.getElementById('ms-suc').value = '';
-            
             masterFilteredData = [...rawData];
-            applyMasterFilters(); // Aplica y dibuja la tabla
+            applyMasterFilters(); 
             processNavState();
         }
 
@@ -246,7 +236,7 @@
                 const matchSuc = suc === "" || i['Sucursal Responsable'] === suc;
                 return matchText && matchCat && matchEst && matchSuc;
             });
-            sortMasterTable(currentSort.column, false); // Reordena y dibuja
+            sortMasterTable(currentSort.column, false);
         }
 
         function sortMasterTable(column, toggle = true) {
@@ -254,7 +244,6 @@
                 currentSort.asc = (currentSort.column === column) ? !currentSort.asc : true;
                 currentSort.column = column;
             }
-            
             masterFilteredData.sort((a, b) => {
                 let valA = (a[column] || '').toString().toLowerCase();
                 let valB = (b[column] || '').toString().toLowerCase();
@@ -262,7 +251,6 @@
                 if (valA > valB) return currentSort.asc ? 1 : -1;
                 return 0;
             });
-
             drawMasterTable();
         }
 
@@ -274,7 +262,7 @@
         function drawMasterTable() {
             const container = document.getElementById('table-master-container');
             if (masterFilteredData.length === 0) {
-                container.innerHTML = '<div class="p-8 text-center text-slate-500"><i class="fa-solid fa-box-open text-3xl mb-3 opacity-30"></i><p>No se encontraron equipos con estos filtros.</p></div>';
+                container.innerHTML = '<div class="p-8 text-center text-slate-500"><p>No se encontraron equipos.</p></div>';
                 return;
             }
 
@@ -288,7 +276,7 @@
                             <th onclick="sortMasterTable('Categoria')">Categoría ${getSortIcon('Categoria')}</th>
                             <th onclick="sortMasterTable('Estado')">Estado ${getSortIcon('Estado')}</th>
                             <th onclick="sortMasterTable('Sucursal Responsable')">Sucursal ${getSortIcon('Sucursal Responsable')}</th>
-                            <th class="text-center">Ficha</th>
+                            <th class="text-center">Acción</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm">
@@ -297,22 +285,19 @@
             html += masterFilteredData.map(i => `
                 <tr>
                     <td class="font-semibold text-slate-600">${i.Marca || 'Genérico'}</td>
-                    <td class="font-bold text-slate-900">${i.Modelo}</td>
-                    <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || '---'}</td>
+                    <td class="font-bold text-slate-900">${i.Modelo || i['MODELO/Nombre'] || ''}</td>
+                    <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || i['N° SERIE'] || '---'}</td>
                     <td class="text-xs text-slate-500">${i.Categoria}</td>
                     <td><span class="text-[9px] font-bold px-2 py-1 rounded-full ${i.Estado === 'Uso Operacion' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span></td>
-                    <td class="text-xs">${i['Sucursal Responsable'] || '---'}</td>
+                    <td class="text-xs">${i['Sucursal Responsable'] || i['SUCURSAL RESPONSABLE'] || '---'}</td>
                     <td class="text-center">
-                        <button onclick="pushNav('${i.Modelo.replace(/'/g, "\\'")}', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 hover:text-white hover:bg-indigo-600 text-xs font-bold px-3 py-1 rounded transition-colors border border-indigo-200">Ver</button>
+                        <button onclick="pushNav('Detalle de Material', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 hover:text-white hover:bg-indigo-600 text-xs font-bold px-3 py-1 rounded transition-colors border border-indigo-200">Detalle</button>
                     </td>
                 </tr>
             `).join('');
-
-            html += `</tbody></table>`;
-            container.innerHTML = html;
+            container.innerHTML = html + `</tbody></table>`;
         }
 
-        // --- RENDERIZADO DE NIVELES (1,2,3,4) ---
         function renderCategoriesGrid() {
             const cats = [...new Set(currentFilteredData.map(i => i.Categoria))];
             document.getElementById('grid-categories').innerHTML = cats.map(c => `
@@ -326,7 +311,7 @@
             const marcas = [...new Set(currentFilteredData.map(i => i.Marca || 'Genérico'))];
             document.getElementById('grid-subcategories').innerHTML = marcas.map(m => `
                 <div onclick="pushNav('${m}', {Marca: '${m === 'Genérico' ? '' : m}'}, 'materials')" class="glass-card p-6 flex justify-between items-center">
-                    <div><span class="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 mb-2 inline-block">FABRICANTE</span><h4 class="font-bold text-slate-800">${m}</h4></div>
+                    <div><span class="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 mb-2 inline-block">FAMILIA / MARCA</span><h4 class="font-bold text-slate-800">${m}</h4></div>
                     <i class="fa-solid fa-tag text-slate-200"></i>
                 </div>`).join('');
         }
@@ -337,34 +322,73 @@
             let html = `<table class="data-table"><thead><tr><th>Marca</th><th>Modelo</th><th>N° Serie</th><th>Estado</th><th class="text-center">Acción</th></tr></thead><tbody>`;
             html += list.map(i => `<tr>
                     <td class="font-semibold text-slate-600">${i.Marca || 'Genérico'}</td>
-                    <td class="font-bold text-slate-900">${i.Modelo}</td>
-                    <td class="font-mono text-xs text-indigo-600">${i['N Serie']}</td>
+                    <td class="font-bold text-slate-900">${i.Modelo || i['MODELO/Nombre'] || ''}</td>
+                    <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || i['N° SERIE'] || '---'}</td>
                     <td><span class="text-[9px] font-bold px-2 py-1 rounded-full ${i.Estado === 'Uso Operacion' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span></td>
-                    <td class="text-center"><button onclick="pushNav('${i.Modelo.replace(/'/g, "\\'")}', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 bg-indigo-50 px-3 py-1 rounded font-bold text-xs">Ficha</button></td>
+                    <td class="text-center"><button onclick="pushNav('Detalle de Material', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white transition-colors border border-indigo-200 px-3 py-1 rounded font-bold text-xs">Detalle</button></td>
                 </tr>`).join('');
             container.innerHTML = html + `</tbody></table>`;
         }
 
         function searchMaterials(q) {
-            renderMaterialsTable(currentFilteredData.filter(i => (i.Modelo||'').toLowerCase().includes(q.toLowerCase()) || (i['N Serie']||'').toLowerCase().includes(q.toLowerCase())));
+            renderMaterialsTable(currentFilteredData.filter(i => (i.Modelo||i['MODELO/Nombre']||'').toLowerCase().includes(q.toLowerCase()) || (i['N Serie']||i['N° SERIE']||'').toLowerCase().includes(q.toLowerCase())));
         }
 
+        // --- DETALLE DE MATERIAL (VISTA AMPLIADA) ---
         function renderDetail() {
             const i = currentFilteredData[0];
             document.getElementById('item-ficha').innerHTML = `
                 <div class="glass-card-static overflow-hidden shadow-2xl">
-                    <div class="bg-indigo-600 p-8 text-white text-center"><h2 class="text-2xl font-black">${i.Modelo}</h2><p class="text-[10px] uppercase opacity-80 mt-1">${i.Categoria}</p></div>
-                    <div class="p-6 space-y-4">
-                        <div class="grid grid-cols-2 gap-3 text-xs">
-                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">S/N (Serie)</p><p class="font-mono font-bold text-sm text-indigo-600">${i['N Serie']}</p></div>
-                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Estado</p><p class="font-bold text-sm text-slate-700">${i.Estado}</p></div>
-                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Ubicación Física</p><p class="font-bold text-sm text-slate-700">${i['Ubicacion Fisica']}</p></div>
-                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Sucursal</p><p class="font-bold text-sm text-slate-700">${i['Sucursal Responsable']}</p></div>
+                    <div class="bg-indigo-600 p-8 text-white text-center relative">
+                        <i class="fa-solid fa-boxes-stacked absolute top-4 right-4 opacity-20 text-5xl"></i>
+                        <h2 class="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-2">Detalle de Material</h2>
+                        <h3 class="text-2xl font-black">${i.Modelo || i['MODELO/Nombre'] || '---'}</h3>
+                        <p class="text-[11px] uppercase opacity-90 mt-2">${i.Categoria} | ${i.Marca || 'Genérico'}</p>
+                    </div>
+                    
+                    <div class="p-6 md:p-8 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Número de Serie</p>
+                                <p class="font-mono font-bold text-base text-indigo-600">${i['N Serie'] || i['N° SERIE'] || 'No Registrado'}</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Estado Operativo</p>
+                                <p class="font-bold text-sm text-slate-800">${i.Estado || '---'}</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Condición Técnica</p>
+                                <p class="font-bold text-sm text-slate-800">${i.Condicion || i.CONDICION || '---'}</p>
+                            </div>
                         </div>
-                        <div class="bg-amber-50 p-4 rounded-xl border-l-4 border-amber-400 text-xs italic">"${i.Observaciones || 'Sin observaciones'}"</div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                                <p class="text-indigo-400 font-bold uppercase text-[9px] mb-1">Sucursal Responsable</p>
+                                <p class="font-bold text-sm text-indigo-900">${i['Sucursal Responsable'] || i['SUCURSAL RESPONSABLE'] || '---'}</p>
+                            </div>
+                            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                                <p class="text-indigo-400 font-bold uppercase text-[9px] mb-1">Ubicación Física Exacta</p>
+                                <p class="font-bold text-sm text-indigo-900">${i['Ubicacion Fisica'] || i['UBICACION FISICA'] || '---'}</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                            <div class="p-3 border-b border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Contrato</p><p class="font-bold text-slate-700">${i.Contrato || '---'}</p></div>
+                            <div class="p-3 border-b border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Guía / Factura N°</p><p class="font-bold text-slate-700">${i['N° GUIA / FAC'] || i['Nro Factura'] || '---'}</p></div>
+                            <div class="p-3 border-b border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Proveedor</p><p class="font-bold text-slate-700">${i.Proveedor || i.PROVEEDOR || '---'}</p></div>
+                            <div class="p-3 border-b border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Valor Adquisición</p><p class="font-bold text-emerald-600">${i['Valor Compra Neto'] || '---'} <span class="text-[9px] text-slate-400 font-normal block">${i['Fecha Adquisicion'] || i['Fecha Revision'] || ''}</span></p></div>
+                        </div>
+
+                        <div class="bg-amber-50 p-5 rounded-xl border-l-4 border-amber-400">
+                            <p class="font-bold text-amber-700 uppercase text-[10px] mb-2"><i class="fa-solid fa-note-sticky mr-1"></i> Observaciones</p>
+                            <p class="text-sm text-slate-700 italic">"${i.Observaciones || i.OBS || 'No se han registrado observaciones adicionales para este material.'}"</p>
+                        </div>
                     </div>
                 </div>
-                <div class="mt-4"><button onclick="popNav(navStack.length - 2)" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm">Volver</button></div>`;
+                <div class="mt-6">
+                    <button onclick="popNav(navStack.length - 2)" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-arrow-left mr-2"></i> Volver atrás</button>
+                </div>`;
         }
 
         function updateDashboard() {
@@ -372,11 +396,15 @@
             document.getElementById('kpi-op').innerText = rawData.filter(i => i.Estado === "Uso Operacion").length;
             document.getElementById('kpi-maint').innerText = rawData.filter(i => i.Estado === "En Mantencion").length;
             document.getElementById('kpi-risk').innerText = rawData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado)).length;
-            // Configuración básica de gráficos...
+            
             const ctxE = document.getElementById('chartEstado'), ctxS = document.getElementById('chartSucursal'), ctxF = document.getElementById('chartFisica'), ctxC = document.getElementById('chartCat');
             if(chartInstances.estado) Object.values(chartInstances).forEach(c => c.destroy());
             
-            const getCounts = (key) => rawData.reduce((acc, i) => { if(i[key]) acc[i[key]] = (acc[i[key]]||0)+1; return acc; }, {});
+            const getCounts = (key) => rawData.reduce((acc, i) => { 
+                let val = i[key] || i[key.toUpperCase()]; 
+                if(val) acc[val] = (acc[val]||0)+1; 
+                return acc; 
+            }, {});
             
             chartInstances.estado = new Chart(ctxE, { type:'doughnut', data:{ labels:Object.keys(getCounts('Estado')), datasets:[{data:Object.values(getCounts('Estado')), backgroundColor:['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6']}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}}} });
             chartInstances.sucursal = new Chart(ctxS, { type:'doughnut', data:{ labels:Object.keys(getCounts('Sucursal Responsable')), datasets:[{data:Object.values(getCounts('Sucursal Responsable')), backgroundColor:['#6366f1','#10b981','#f59e0b']}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}}} });
