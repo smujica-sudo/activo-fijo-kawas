@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIAF 2026 - Dashboard Inteligente</title>
+    <title>SIAF 2026 - Navegación Jerárquica</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,14 +11,16 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .view-section { display: none; }
-        .view-section.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .view-section.active { display: block; animation: fadeIn 0.25s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; transition: all 0.2s; cursor: pointer; }
-        .glass-card:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1); }
-        .glass-card-no-hover { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; }
-        .breadcrumb-item::after { content: '›'; margin: 0 8px; color: #a5b4fc; }
+        .glass-card:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .glass-card-static { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; }
+        
+        /* Estilos de Breadcrumbs */
+        .breadcrumb-item::after { content: '›'; margin: 0 8px; color: #818cf8; font-weight: 400; }
         .breadcrumb-item:last-child::after { content: ''; }
-        .breadcrumb-link { cursor: pointer; }
+        .breadcrumb-link { cursor: pointer; transition: color 0.2s; }
         .breadcrumb-link:hover { color: white; text-decoration: underline; }
     </style>
 </head>
@@ -26,17 +28,17 @@
 
     <header class="bg-indigo-700 text-white sticky top-0 z-50 shadow-lg">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-3 cursor-pointer" onclick="showView('dashboard')">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="popNav(-1)">
                 <i class="fa-solid fa-boxes-stacked text-xl"></i>
                 <h1 class="font-extrabold text-lg tracking-tight uppercase">SIAF 2026</h1>
             </div>
             <div class="text-[10px] font-bold bg-indigo-800 px-3 py-1 rounded-full border border-indigo-400/30">
-                <span id="items-count">0</span> ACTIVOS CARGADOS
+                <span id="items-count">0</span> ACTIVOS ONLINE
             </div>
         </div>
         <nav class="bg-indigo-900/40 border-t border-indigo-600/50 px-4 py-2">
-            <div id="breadcrumb-path" class="container mx-auto flex items-center text-[10px] font-bold uppercase tracking-widest text-indigo-300">
-                <span class="breadcrumb-item"><span class="breadcrumb-link" onclick="showView('dashboard')">Home</span></span>
+            <div id="breadcrumb-path" class="container mx-auto flex flex-wrap items-center text-[10px] font-bold uppercase tracking-widest text-indigo-200">
+                <span class="breadcrumb-item"><span class="breadcrumb-link" onclick="popNav(-1)">Home</span></span>
             </div>
         </nav>
     </header>
@@ -45,38 +47,38 @@
 
         <section id="view-dashboard" class="view-section active">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div onclick="renderCategories('Todos los Activos')" class="glass-card p-5 border-l-4 border-indigo-500">
+                <div onclick="startNav('Todos los Activos', {})" class="glass-card p-5 border-l-4 border-indigo-500">
                     <p class="text-[10px] font-bold text-slate-400 uppercase">Activos Totales</p>
                     <div id="kpi-total" class="text-3xl font-black">---</div>
                     <p class="text-[9px] text-indigo-400 font-bold mt-2">VER CATEGORÍAS ›</p>
                 </div>
-                <div onclick="filterBy('Estado', 'Uso Operacion')" class="glass-card p-5 border-l-4 border-emerald-500">
+                <div onclick="startNav('Operación', {Estado: 'Uso Operacion'})" class="glass-card p-5 border-l-4 border-emerald-500">
                     <p class="text-[10px] font-bold text-slate-400 uppercase">Operación</p>
                     <div id="kpi-op" class="text-3xl font-black text-emerald-600">---</div>
                 </div>
-                <div onclick="filterBy('Estado', 'En Mantencion')" class="glass-card p-5 border-l-4 border-amber-500">
+                <div onclick="startNav('Mantención', {Estado: 'En Mantencion'})" class="glass-card p-5 border-l-4 border-amber-500">
                     <p class="text-[10px] font-bold text-slate-400 uppercase">Mantención</p>
                     <div id="kpi-maint" class="text-3xl font-black text-amber-500">---</div>
                 </div>
-                <div onclick="filterBy('Riesgo', 'En Riesgo')" class="glass-card p-5 border-l-4 border-rose-500">
+                <div onclick="startNav('En Riesgo', {Riesgo: true})" class="glass-card p-5 border-l-4 border-rose-500">
                     <p class="text-[10px] font-bold text-slate-400 uppercase">En Riesgo</p>
                     <div id="kpi-risk" class="text-3xl font-black text-rose-500">---</div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="glass-card-no-hover p-6">
+                <div class="glass-card-static p-6">
                     <h3 class="text-xs font-bold text-slate-400 uppercase mb-1">Sucursal Responsable</h3>
-                    <p class="text-[9px] text-indigo-500 font-bold mb-4">TOQUE UNA SECCIÓN PARA FILTRAR</p>
+                    <p class="text-[9px] text-indigo-500 font-bold mb-4">TOQUE SUCURSAL PARA EXPLORAR</p>
                     <div class="h-56"><canvas id="chartSucursal"></canvas></div>
                 </div>
-                <div class="glass-card-no-hover p-6">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-1">Bodegas / Ubicaciones</h3>
-                    <p class="text-[9px] text-indigo-500 font-bold mb-4">TOQUE UNA SECCIÓN PARA FILTRAR</p>
+                <div class="glass-card-static p-6">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-1">Top Bodegas / Clientes</h3>
+                    <p class="text-[9px] text-indigo-500 font-bold mb-4">TOQUE UBICACIÓN PARA EXPLORAR</p>
                     <div class="h-56"><canvas id="chartFisica"></canvas></div>
                 </div>
-                <div onclick="renderCategories('Categorías')" class="glass-card p-6 border-2 border-transparent hover:border-indigo-500">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-1">Inventario por Familia</h3>
+                <div onclick="startNav('Todas las Categorías', {})" class="glass-card p-6 border-2 border-transparent hover:border-indigo-500">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-1">Familias de Equipos</h3>
                     <p class="text-[9px] text-indigo-500 font-bold mb-4">TOQUE PARA VER TODAS</p>
                     <div class="h-56"><canvas id="chartCat"></canvas></div>
                 </div>
@@ -84,19 +86,27 @@
         </section>
 
         <section id="view-categories" class="view-section">
-            <h2 id="cat-view-title" class="text-2xl font-black text-slate-800 uppercase mb-6"></h2>
-            <div id="categories-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+            <h2 id="title-categories" class="text-2xl font-black text-slate-800 uppercase mb-2"></h2>
+            <p class="text-xs font-bold text-slate-400 mb-6 tracking-wide">Paso 1: Seleccione una familia de equipos</p>
+            <div id="grid-categories" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </section>
 
-        <section id="view-list" class="view-section">
+        <section id="view-subcategories" class="view-section">
+            <h2 id="title-subcategories" class="text-2xl font-black text-slate-800 uppercase mb-2"></h2>
+            <p class="text-xs font-bold text-slate-400 mb-6 tracking-wide">Paso 2: Seleccione una Marca / Fabricante</p>
+            <div id="grid-subcategories" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="view-materials" class="view-section">
             <div class="mb-6 space-y-4">
-                <h2 id="list-title" class="text-2xl font-black text-slate-800 uppercase"></h2>
-                <div class="relative">
+                <h2 id="title-materials" class="text-2xl font-black text-slate-800 uppercase mb-1"></h2>
+                <p class="text-xs font-bold text-slate-400 tracking-wide">Paso 3: Seleccione el Material / Equipo específico</p>
+                <div class="relative mt-4">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="list-search" onkeyup="searchInList(this.value)" placeholder="Buscar en esta lista (Modelo, Marca o S/N)..." class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <input type="text" id="search-materials" onkeyup="searchMaterials(this.value)" placeholder="Buscar por Modelo o Serie en esta lista..." class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
             </div>
-            <div id="items-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <div id="grid-materials" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
         <section id="view-detail" class="view-section">
@@ -106,13 +116,12 @@
     </main>
 
     <script>
-        // CONFIGURACIÓN API
-        const API_URL = 'https://script.google.com/macros/s/AKfycby36cA1fdHcHZBlq3ZXh65qXzgX_c1ujI-c296gMt3e_SfzPA3tC6Mqu55DAmFeJvwj/exec'; // <--- ¡PEGA TU URL DE APPS SCRIPT AQUÍ!
+        const API_URL = 'TU_URL_DE_APPS_SCRIPT_AQUI'; // <-- REEMPLAZAR AQUÍ
         let rawData = [];
-        let filteredData = [];
-        let currentPath = [];
-
-        // Instancias de Chart.js
+        
+        // EL CEREBRO DE NAVEGACIÓN (PILA JERÁRQUICA)
+        let navStack = []; 
+        let currentFilteredData = [];
         let chartInstances = { sucursal: null, fisica: null, cat: null };
 
         async function init() {
@@ -121,26 +130,7 @@
                 rawData = await res.json();
                 document.getElementById('items-count').innerText = rawData.length;
                 updateDashboard();
-            } catch (e) { console.error("Error al cargar los datos:", e); }
-        }
-
-        // --- SISTEMA DE VISTAS Y BREADCRUMBS ---
-        function showView(viewId, path = []) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.getElementById('view-' + viewId).classList.add('active');
-            
-            currentPath = path;
-            const breadContainer = document.getElementById('breadcrumb-path');
-            let html = `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="showView('dashboard')">Home</span></span>`;
-            
-            path.forEach((p, idx) => {
-                const isLast = idx === path.length - 1;
-                html += `<span class="breadcrumb-item ${isLast ? 'text-indigo-100' : ''}">
-                    <span class="${!isLast ? 'breadcrumb-link' : ''}" onclick="${p.action}">${p.name}</span>
-                </span>`;
-            });
-            breadContainer.innerHTML = html;
-            window.scrollTo(0,0);
+            } catch (e) { console.error("Error API", e); }
         }
 
         function updateDashboard() {
@@ -151,118 +141,192 @@
             renderCharts();
         }
 
-        function renderCategories(title = "Categorías") {
-            const cats = [...new Set(rawData.map(i => i.Categoria))];
-            document.getElementById('cat-view-title').innerText = title;
-            const grid = document.getElementById('categories-grid');
-            
-            grid.innerHTML = cats.map(c => `
-                <div onclick="filterBy('Categoria', '${c}')" class="glass-card p-6 flex justify-between items-center group">
+        // --- SISTEMA DE NAVEGACIÓN (STATE MACHINE) ---
+
+        // Inicia una nueva ruta desde el Dashboard (Nivel 1)
+        function startNav(title, initialQuery) {
+            navStack = [{ title: title, query: initialQuery, view: 'categories' }];
+            processNavState();
+        }
+
+        // Avanza al siguiente nivel en la jerarquía (Niveles 2, 3, 4)
+        function pushNav(title, queryFilter, viewTarget) {
+            let lastQuery = navStack[navStack.length - 1].query;
+            navStack.push({
+                title: title,
+                query: { ...lastQuery, ...queryFilter },
+                view: viewTarget
+            });
+            processNavState();
+        }
+
+        // Retrocede a un nivel específico a través de los Breadcrumbs
+        function popNav(index) {
+            if (index === -1) {
+                navStack = []; // Volver a Dashboard
+                document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+                document.getElementById('view-dashboard').classList.add('active');
+                document.getElementById('breadcrumb-path').innerHTML = `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="popNav(-1)">Home</span></span>`;
+                window.scrollTo(0,0);
+                return;
+            }
+            navStack = navStack.slice(0, index + 1);
+            processNavState();
+        }
+
+        // Procesa hacia dónde ir e inyecta los datos filtrados
+        function processNavState() {
+            let current = navStack[navStack.length - 1];
+
+            // 1. Filtrar datos según las queries acumuladas en el path
+            currentFilteredData = rawData.filter(item => {
+                for (let key in current.query) {
+                    if (key === 'Riesgo') {
+                        if (!["Perdido", "Vendido", "Pendiente"].includes(item.Estado)) return false;
+                    } else if (item[key] !== current.query[key]) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            // 2. Construir Breadcrumbs
+            let breadHtml = `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="popNav(-1)">Home</span></span>`;
+            navStack.forEach((step, idx) => {
+                const isLast = idx === navStack.length - 1;
+                breadHtml += `<span class="breadcrumb-item ${isLast ? 'text-white' : ''}">
+                    <span class="${!isLast ? 'breadcrumb-link text-indigo-300' : ''}" onclick="popNav(${idx})">${step.title}</span>
+                </span>`;
+            });
+            document.getElementById('breadcrumb-path').innerHTML = breadHtml;
+
+            // 3. Renderizar la vista correspondiente
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + current.view).classList.add('active');
+            window.scrollTo(0,0);
+
+            if (current.view === 'categories') {
+                document.getElementById('title-categories').innerText = current.title;
+                renderCategoriesGrid();
+            } else if (current.view === 'subcategories') {
+                document.getElementById('title-subcategories').innerText = current.title;
+                renderSubcategoriesGrid();
+            } else if (current.view === 'materials') {
+                document.getElementById('title-materials').innerText = current.title;
+                document.getElementById('search-materials').value = '';
+                renderMaterialsGrid(currentFilteredData);
+            }
+        }
+
+        // --- RENDERIZADORES DE VISTAS (NIVELES) ---
+
+        // NIVEL 1: Categorías
+        function renderCategoriesGrid() {
+            const cats = [...new Set(currentFilteredData.map(i => i.Categoria))];
+            const grid = document.getElementById('grid-categories');
+            grid.innerHTML = cats.map(c => {
+                let count = currentFilteredData.filter(i => i.Categoria === c).length;
+                return `
+                <div onclick="pushNav('${c}', {Categoria: '${c}'}, 'subcategories')" class="glass-card p-6 flex justify-between items-center group">
                     <div>
                         <h4 class="font-bold text-slate-700">${c}</h4>
-                        <p class="text-[10px] text-slate-400 uppercase font-bold">${rawData.filter(i=>i.Categoria===c).length} Items</p>
+                        <p class="text-[10px] text-indigo-500 uppercase font-bold">${count} Items</p>
                     </div>
-                    <i class="fa-solid fa-chevron-right text-slate-200 group-hover:text-indigo-600"></i>
-                </div>
-            `).join('');
-            
-            showView('categories', [{name: title, action: `renderCategories('${title}')`}]);
+                    <i class="fa-solid fa-folder-open text-slate-200 group-hover:text-indigo-600 text-xl"></i>
+                </div>`;
+            }).join('');
         }
 
-        // --- SISTEMA DE FILTRADO NAVEGABLE ---
-        function filterBy(type, value) {
-            let list = [];
-            
-            if (type === 'Categoria') list = rawData.filter(i => i.Categoria === value);
-            else if (type === 'Estado') list = rawData.filter(i => i.Estado === value);
-            else if (type === 'Riesgo') list = rawData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado));
-            else if (type === 'Sucursal') list = rawData.filter(i => i['Sucursal Responsable'] === value);
-            else if (type === 'Ubicacion') list = rawData.filter(i => i['Ubicacion Fisica'] === value);
-            else list = rawData;
-
-            filteredData = list;
-            document.getElementById('list-title').innerText = value;
-            document.getElementById('list-search').value = '';
-            renderGrid(list);
-
-            // Construir la ruta de migas de pan correcta según el origen del click
-            let path = [];
-            if (type === 'Categoria') {
-                path = [{name: 'Activos', action: "renderCategories('Todos los Activos')"}, {name: value, action: ""}];
-            } else {
-                path = [{name: value, action: ""}];
-            }
-            showView('list', path);
+        // NIVEL 2: Subcategorías (Marcas)
+        function renderSubcategoriesGrid() {
+            const marcas = [...new Set(currentFilteredData.map(i => i.Marca || 'Genérico'))];
+            const grid = document.getElementById('grid-subcategories');
+            grid.innerHTML = marcas.map(m => {
+                let count = currentFilteredData.filter(i => (i.Marca || 'Genérico') === m).length;
+                return `
+                <div onclick="pushNav('${m}', {Marca: '${m === 'Genérico' ? '' : m}'}, 'materials')" class="glass-card p-6 flex justify-between items-center group">
+                    <div>
+                        <span class="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 uppercase mb-2 inline-block">FABRICANTE / MARCA</span>
+                        <h4 class="font-bold text-slate-800">${m}</h4>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">${count} Modelos</p>
+                    </div>
+                    <i class="fa-solid fa-tag text-slate-200 group-hover:text-indigo-600"></i>
+                </div>`;
+            }).join('');
         }
 
-        function renderGrid(list) {
-            const grid = document.getElementById('items-grid');
+        // NIVEL 3: Materiales (Items / Modelos)
+        function renderMaterialsGrid(list) {
+            const grid = document.getElementById('grid-materials');
             grid.innerHTML = list.map(i => `
-                <div onclick="renderDetail(${i.ID})" class="glass-card p-4">
+                <div onclick="pushNav('${i.Modelo}', {ID: ${i.ID}}, 'detail')" class="glass-card p-4 group hover:bg-indigo-50">
                     <div class="flex justify-between items-start mb-2">
-                        <span class="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 uppercase">${i.Marca}</span>
+                        <span class="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-600 uppercase group-hover:bg-indigo-200 group-hover:text-indigo-800">${i.Marca || 'Genérico'}</span>
                         <span class="text-[9px] font-bold px-2 py-0.5 rounded ${i.Estado === 'Uso Operacion' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span>
                     </div>
                     <h4 class="font-bold text-sm text-slate-800">${i.Modelo}</h4>
-                    <p class="text-[10px] text-slate-400 mt-1"><i class="fa-solid fa-barcode mr-1"></i> S/N: ${i['N Serie']}</p>
+                    <p class="text-[10px] text-slate-400 mt-1 font-mono"><i class="fa-solid fa-barcode mr-1"></i> S/N: ${i['N Serie']}</p>
                 </div>
             `).join('');
         }
 
-        function searchInList(query) {
-            const filtered = filteredData.filter(i => 
-                i.Marca.toLowerCase().includes(query.toLowerCase()) || 
+        function searchMaterials(query) {
+            const list = currentFilteredData.filter(i => 
                 i.Modelo.toLowerCase().includes(query.toLowerCase()) || 
                 i['N Serie'].toLowerCase().includes(query.toLowerCase())
             );
-            renderGrid(filtered);
+            renderMaterialsGrid(list);
         }
 
-        function renderDetail(id) {
-            const i = rawData.find(x => x.ID == id);
+        // NIVEL 4: Ficha Detalle
+        function renderDetail() {
+            // El item ya fue filtrado y debe estar solo en currentFilteredData (por el query {ID: id})
+            const i = currentFilteredData[0];
             const ficha = document.getElementById('item-ficha');
-            let detailPath = [...currentPath, {name: i.Modelo, action: ""}];
-
             ficha.innerHTML = `
-                <div class="glass-card-no-hover overflow-hidden shadow-2xl">
-                    <div class="bg-indigo-600 p-8 text-white text-center">
+                <div class="glass-card-static overflow-hidden shadow-2xl">
+                    <div class="bg-indigo-600 p-8 text-white text-center relative">
+                        <i class="fa-solid fa-microchip absolute top-4 right-4 opacity-20 text-4xl"></i>
                         <h2 class="text-2xl font-black">${i.Modelo}</h2>
-                        <p class="text-[10px] uppercase opacity-70 mt-1 tracking-widest">${i.Categoria}</p>
+                        <p class="text-[10px] uppercase tracking-widest opacity-80 mt-1">${i.Categoria} | ${i.Marca}</p>
                     </div>
                     <div class="p-6 space-y-4">
                         <div class="grid grid-cols-2 gap-3 text-xs">
-                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">Marca</p><p class="font-bold text-sm text-slate-700">${i.Marca}</p></div>
-                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">N° Serie</p><p class="font-mono font-bold text-sm text-indigo-600">${i['N Serie']}</p></div>
-                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">Ubic. Física</p><p class="font-bold text-sm text-slate-700">${i['Ubicacion Fisica']}</p></div>
-                            <div class="bg-slate-50 p-3 rounded-lg"><p class="text-slate-400 font-bold uppercase text-[9px]">Sucursal</p><p class="font-bold text-sm text-slate-700">${i['Sucursal Responsable']}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">S/N (Serie)</p><p class="font-mono font-bold text-sm text-indigo-600">${i['N Serie']}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Condición</p><p class="font-bold text-sm text-slate-700">${i.Condicion}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Ubicación Física</p><p class="font-bold text-sm text-slate-700">${i['Ubicacion Fisica']}</p></div>
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Sucursal (Responsable)</p><p class="font-bold text-sm text-slate-700">${i['Sucursal Responsable']}</p></div>
                         </div>
-                        <div class="bg-amber-50 p-4 rounded-xl border-l-4 border-amber-400 text-xs italic">"${i.Observaciones || 'Sin observaciones registradas'}"</div>
-                        <button onclick="showView('list', currentPath)" class="w-full bg-slate-900 hover:bg-slate-800 transition-colors text-white py-4 rounded-xl font-bold text-sm">Volver al Listado</button>
+                        <div class="bg-amber-50 p-4 rounded-xl border-l-4 border-amber-400 text-xs italic">
+                            <p class="font-bold text-amber-700 uppercase text-[9px] not-italic mb-1">Observaciones</p>
+                            "${i.Observaciones || 'Sin observaciones registradas'}"
+                        </div>
                     </div>
                 </div>`;
-            showView('detail', detailPath);
+            document.getElementById('item-ficha').innerHTML += `
+                <div class="mt-4">
+                    <button onclick="popNav(navStack.length - 2)" class="w-full bg-slate-900 hover:bg-slate-800 transition-colors text-white py-4 rounded-xl font-bold text-sm shadow-lg">Volver al Material</button>
+                </div>
+            `;
         }
 
-        // --- GRÁFICOS (Ahora con OnClick Dinámico) ---
+        // --- INICIALIZACIÓN DE GRÁFICOS INTERACTIVOS ---
         function renderCharts() {
-            // Destruir gráficos previos si se recarga la data
             Object.values(chartInstances).forEach(chart => { if (chart) chart.destroy(); });
 
-            // 1. SUCURSAL RESPONSABLE (STGO vs PV)
+            // SUCURSAL -> Clic inicia ruta de Categorías
             const suc = {}; rawData.forEach(x => { if(x['Sucursal Responsable']) suc[x['Sucursal Responsable']] = (suc[x['Sucursal Responsable']] || 0) + 1 });
             chartInstances.sucursal = new Chart(document.getElementById('chartSucursal'), {
                 type: 'doughnut',
                 data: { labels: Object.keys(suc), datasets: [{ data: Object.values(suc), backgroundColor: ['#6366f1','#10b981','#f59e0b', '#ef4444'] }] },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    onClick: (e, el) => { if(el.length) filterBy('Sucursal', Object.keys(suc)[el[0].index]); },
+                options: { responsive: true, maintainAspectRatio: false, 
+                    onClick: (e, el) => { if(el.length) startNav(`Sede ${Object.keys(suc)[el[0].index]}`, {'Sucursal Responsable': Object.keys(suc)[el[0].index]}); },
                     plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } 
                 }
             });
 
-            // 2. UBICACIÓN FÍSICA (Top 5 Bodegas / Clientes)
+            // FÍSICA -> Clic inicia ruta de Categorías
             const ubi = {}; rawData.forEach(x => { if(x['Ubicacion Fisica']) ubi[x['Ubicacion Fisica']] = (ubi[x['Ubicacion Fisica']] || 0) + 1 });
-            // Ordenar de mayor a menor y tomar el top 5 para no saturar el gráfico
             let sortedUbi = Object.entries(ubi).sort((a,b) => b[1] - a[1]).slice(0, 5);
             let ubiLabels = sortedUbi.map(u => u[0]);
             let ubiData = sortedUbi.map(u => u[1]);
@@ -270,20 +334,30 @@
             chartInstances.fisica = new Chart(document.getElementById('chartFisica'), {
                 type: 'pie',
                 data: { labels: ubiLabels, datasets: [{ data: ubiData, backgroundColor: ['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9'] }] },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    onClick: (e, el) => { if(el.length) filterBy('Ubicacion', ubiLabels[el[0].index]); },
+                options: { responsive: true, maintainAspectRatio: false, 
+                    onClick: (e, el) => { if(el.length) startNav(`Bodega: ${ubiLabels[el[0].index]}`, {'Ubicacion Fisica': ubiLabels[el[0].index]}); },
                     plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } 
                 }
             });
             
-            // 3. CATEGORÍAS
+            // CATEGORÍAS -> Clic inicia ruta mostrando SUBCATEGORÍAS de esa Categoría
             const cats = {}; rawData.forEach(x => cats[x.Categoria] = (cats[x.Categoria] || 0) + 1);
+            let catLabels = Object.keys(cats);
             chartInstances.cat = new Chart(document.getElementById('chartCat'), {
                 type: 'bar',
-                data: { labels: Object.keys(cats).map(c => c.length > 10 ? c.substring(0,10)+'...' : c), datasets: [{ data: Object.values(cats), backgroundColor: '#6366f1', borderRadius: 4 }] },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
+                data: { labels: catLabels.map(c => c.length > 10 ? c.substring(0,10)+'...' : c), datasets: [{ data: Object.values(cats), backgroundColor: '#6366f1', borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, 
+                    onClick: (e, el) => { 
+                        if(el.length) {
+                            let selectedCat = catLabels[el[0].index];
+                            // Salto directo al nivel 2 (Subcategorías) inicializando la pila correctamente
+                            navStack = [
+                                { title: 'Total', query: {}, view: 'categories' }, 
+                                { title: selectedCat, query: {Categoria: selectedCat}, view: 'subcategories' }
+                            ];
+                            processNavState();
+                        }
+                    },
                     plugins: { legend: { display: false } }, 
                     scales: { y: { beginAtZero: true }, x: { grid: { display: false }, ticks: { font: { size: 8 } } } } 
                 }
