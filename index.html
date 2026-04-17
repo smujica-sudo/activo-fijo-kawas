@@ -29,8 +29,13 @@
         .table-container { overflow-x: auto; overflow-y: auto; max-height: 70vh; background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .data-table { width: 100%; text-align: left; border-collapse: separate; border-spacing: 0; min-width: 1000px; }
         .data-table thead { position: sticky; top: 0; z-index: 20; }
-        .data-table th.sortable { background-color: #f8fafc; padding: 1rem 0.5rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 800; cursor: pointer; user-select: none; transition: background 0.2s; border-bottom: 2px solid #e2e8f0; }
+        
+        /* CSS CORREGIDO PARA CABECERAS */
+        .data-table th.sortable, .data-table th.nosort { background-color: #f8fafc; padding: 1rem 0.5rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 800; border-bottom: 2px solid #e2e8f0; }
+        .data-table th.sortable { cursor: pointer; user-select: none; transition: background 0.2s; }
         .data-table th.sortable:hover { background-color: #f1f5f9; color: #4f46e5; }
+        .data-table tr.filter-row th { background-color: #eef2ff; padding: 0.5rem; border-bottom: 2px solid #c7d2fe; }
+        
         .data-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         .data-table tr:last-child td { border-bottom: none; }
         .data-table tr:hover { background-color: #f8fafc; }
@@ -121,22 +126,22 @@
             <h2 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest border-b border-slate-200 pb-2"><i class="fa-solid fa-chart-pie mr-1"></i> Distribución Operativa (Cantidades)</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                 <div class="glass-card-static p-5 flex flex-col group">
-                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Estado Operativo</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span></div>
+                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Estado Operativo</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
                     <div class="grid grid-cols-2 gap-2 mb-3"><select id="flt-estado-fam" onchange="updateLocalChart('estado')" class="chart-select"><option value="">-- Familia --</option></select><select id="flt-estado-suc" onchange="updateLocalChart('estado')" class="chart-select"><option value="">-- Sucursal --</option></select></div>
                     <div class="h-48 relative cursor-pointer"><canvas id="chartEstado"></canvas></div>
                 </div>
                 <div class="glass-card-static p-5 flex flex-col group">
-                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Inventario por Familia</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span></div>
+                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Inventario por Familia</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
                     <div class="grid grid-cols-2 gap-2 mb-3"><select id="flt-cat-suc" onchange="updateLocalChart('cat')" class="chart-select"><option value="">-- Sucursal --</option></select><select id="flt-cat-est" onchange="updateLocalChart('cat')" class="chart-select"><option value="">-- Estado --</option></select></div>
                     <div class="h-48 relative cursor-pointer"><canvas id="chartCat"></canvas></div>
                 </div>
                 <div class="glass-card-static p-5 flex flex-col group">
-                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Sucursal Responsable</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span></div>
+                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Sucursal Responsable</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
                     <div class="grid grid-cols-2 gap-2 mb-3"><select id="flt-sucursal-fam" onchange="updateLocalChart('sucursal')" class="chart-select"><option value="">-- Familia --</option></select><select id="flt-sucursal-est" onchange="updateLocalChart('sucursal')" class="chart-select"><option value="">-- Estado --</option></select></div>
                     <div class="h-48 relative cursor-pointer"><canvas id="chartSucursal"></canvas></div>
                 </div>
                 <div class="glass-card-static p-5 flex flex-col group">
-                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Top Bodegas / Ubicaciones</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span></div>
+                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Top Bodegas / Ubicaciones</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
                     <div class="grid grid-cols-2 gap-2 mb-3"><select id="flt-fisica-fam" onchange="updateLocalChart('fisica')" class="chart-select"><option value="">-- Familia --</option></select><select id="flt-fisica-est" onchange="updateLocalChart('fisica')" class="chart-select"><option value="">-- Estado --</option></select></div>
                     <div class="h-48 relative cursor-pointer"><canvas id="chartFisica"></canvas></div>
                 </div>
@@ -145,12 +150,12 @@
             <h2 class="text-xs font-black text-emerald-500 uppercase mb-4 tracking-widest border-b border-emerald-100 pb-2"><i class="fa-solid fa-chart-line mr-1"></i> Análisis Financiero (Valor de Mercado)</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="glass-card-static p-5 flex flex-col group border-t-2 border-t-emerald-400">
-                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-emerald-300"></i> Valorización por Familia</h3><span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span></div>
+                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-emerald-300"></i> Valorización por Familia</h3><span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
                     <div class="grid grid-cols-2 gap-2 mb-3"><select id="flt-valFam-suc" onchange="updateLocalChart('valFam')" class="chart-select border-emerald-100"><option value="">-- Sucursal --</option></select><select id="flt-valFam-est" onchange="updateLocalChart('valFam')" class="chart-select border-emerald-100"><option value="">-- Estado --</option></select></div>
                     <div class="h-64 relative cursor-pointer"><canvas id="chartValFam"></canvas></div>
                 </div>
                 <div class="glass-card-static p-5 flex flex-col group border-t-2 border-t-emerald-400">
-                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-emerald-300"></i> Valorización por Sucursal</h3><span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span></div>
+                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-emerald-300"></i> Valorización por Sucursal</h3><span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
                     <div class="grid grid-cols-2 gap-2 mb-3"><select id="flt-valSuc-fam" onchange="updateLocalChart('valSuc')" class="chart-select border-emerald-100"><option value="">-- Familia --</option></select><select id="flt-valSuc-est" onchange="updateLocalChart('valSuc')" class="chart-select border-emerald-100"><option value="">-- Estado --</option></select></div>
                     <div class="h-64 relative cursor-pointer"><canvas id="chartValSuc"></canvas></div>
                 </div>
@@ -227,7 +232,7 @@
         let masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
         let currentSort = { column: 'ID', asc: true };
 
-        // --- SISTEMA FINANCIERO BLINDADO ---
+        // --- SISTEMA FINANCIERO ---
         function getMarketValue(item) {
             let val = 0;
             const targetKeys = ['Valor de Mercado Estimado', 'Valor Mercado', 'Valor de Mercado', 'Valor Estimado', 'Valor'];
@@ -354,7 +359,6 @@
             });
 
             let baseQuery = {};
-            // Heredamos los filtros del dashboard general + los locales del gráfico
             if(dashboardFilters.Familia || fFam) baseQuery.Familia = fFam || dashboardFilters.Familia;
             if(dashboardFilters.Categoria) baseQuery.Categoria = dashboardFilters.Categoria;
             if(dashboardFilters['Sucursal Responsable'] || fSuc) baseQuery['Sucursal Responsable'] = fSuc || dashboardFilters['Sucursal Responsable'];
@@ -438,9 +442,14 @@
 
         function openTableFromKPI(title, query) {
             resetMasterFiltersVariables();
+            let finalQuery = { ...query };
+            if(dashboardFilters.Familia) finalQuery.Familia = dashboardFilters.Familia;
+            if(dashboardFilters.Categoria) finalQuery.Categoria = dashboardFilters.Categoria;
+            if(dashboardFilters['Sucursal Responsable']) finalQuery['Sucursal Responsable'] = dashboardFilters['Sucursal Responsable'];
+
             navStack = [
                 { title: 'Buscador', query: {}, view: 'search-families', isMasterSearch: true },
-                { title: title, query: query, view: 'search-table' }
+                { title: title, query: finalQuery, view: 'search-table' }
             ];
             processNavState();
         }
@@ -479,7 +488,7 @@
             else if (current.view === 'search-families') { renderSearchFamilies(); }
         }
 
-        // --- BUSCADOR MAESTRO ---
+        // --- BUSCADOR MAESTRO Y TABLAS MAESTRAS ---
         function resetMasterFiltersVariables() {
             masterSearchText = "";
             document.getElementById('master-live-search').value = "";
@@ -502,7 +511,6 @@
 
         function renderSearchFamilies() {
             const families = [...new Set(rawData.map(i => i.Familia || 'Sin Familia'))].sort();
-            
             let allMatchedItems = rawData.filter(i => {
                 if(!masterSearchText) return true;
                 let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''}`.toLowerCase();
@@ -537,7 +545,6 @@
             pushNav(title, queryObj, 'search-table');
         }
 
-        // --- TARJETAS CON VALOR AGREGADO ---
         function renderFamiliesGrid(isMasterSearch) {
             const current = navStack[navStack.length - 1]; document.getElementById('title-families').innerText = current.title;
             const families = [...new Set(rawData.map(i => i.Familia || 'Sin Familia'))].sort();
@@ -640,7 +647,7 @@
                             <th class="sortable" onclick="sortMasterTable('Valor de Mercado Estimado')">Valor Estimado ${getSortIcon('Valor de Mercado Estimado')}</th>
                             <th class="sortable" onclick="sortMasterTable('Estado')">Estado ${getSortIcon('Estado')}</th>
                             <th class="sortable" onclick="sortMasterTable('Sucursal Responsable')">Sucursal ${getSortIcon('Sucursal Responsable')}</th>
-                            <th class="text-center pr-4">Acción</th>
+                            <th class="nosort text-center pr-4">Acción</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm">
