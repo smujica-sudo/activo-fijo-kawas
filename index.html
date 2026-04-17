@@ -153,7 +153,7 @@
                     <div class="h-48 relative cursor-pointer"><canvas id="chartSucursal"></canvas></div>
                 </div>
                 <div class="glass-card-static p-5 flex flex-col group">
-                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Top Bodegas</h3></div>
+                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Bodegas</h3></div>
                     <div class="grid grid-cols-2 gap-2 mb-3"><select id="flt-fisica-fam" onchange="updateLocalChart('fisica')" class="chart-select"><option value="">-- Familia --</option></select><select id="flt-fisica-est" onchange="updateLocalChart('fisica')" class="chart-select"><option value="">-- Estado --</option></select></div>
                     <div class="h-48 relative cursor-pointer"><canvas id="chartFisica"></canvas></div>
                 </div>
@@ -371,7 +371,7 @@
             }
         }
 
-        // --- FUNCIONES DEL DASHBOARD BI ---
+        // --- FUNCIONES DEL DASHBOARD BI Y REGLAS DE NEGOCIO ---
         function initDashboardFilters() {
             const buildOpts = (key, id) => {
                 const el = document.getElementById(id);
@@ -424,24 +424,42 @@
             const comCountEl = document.getElementById('kpi-com-count'); if(comCountEl) comCountEl.innerText = comItems.length; 
             const comValEl = document.getElementById('kpi-com-val'); if(comValEl) comValEl.innerText = formatCurrency(comItems.reduce((sum, i) => sum + getMarketValue(i), 0));
 
-            let totalMercadoGlobal = 0; let depGlobal = 0; let totalMercadoLinea = 0; let depLinea = 0; let totalMercadoArrendados = 0; let depArrendados = 0; let ingresoMensualArriendos = 0;
+            let totalMercadoGlobal = 0; let depGlobal = 0; 
+            let totalMercadoLinea = 0; let depLinea = 0; 
+            let totalMercadoArrendados = 0; let depArrendados = 0; 
+            let ingresoMensualArriendos = 0;
+
             dashboardFilteredData.forEach(i => {
-                let val = getMarketValue(i); let dep = val * TASA_DEPRECIACION_ANUAL; let textToSearch = `${i.Categoria||''} ${i.Familia||''} ${i.Modelo||''} ${i['MODELO/Nombre']||''} ${i.Marca||''}`.toLowerCase();
-                let isLineaArriendo = textToSearch.includes('espresso') || textToSearch.includes('máquina') || textToSearch.includes('maquina') || textToSearch.includes('molino') || textToSearch.includes('cafetera');
+                let val = getMarketValue(i); 
+                let dep = val * TASA_DEPRECIACION_ANUAL; 
+                // Búsqueda robusta en todas las columnas para reglas de negocio
+                let textToSearch = JSON.stringify(i).toLowerCase(); 
+                
+                let isLineaArriendo = textToSearch.includes('espresso') || textToSearch.includes('máquina') || textToSearch.includes('maquina') || textToSearch.includes('molino') || textToSearch.includes('cafetera') || textToSearch.includes('icba') || textToSearch.includes('bunn');
                 let isArrendado = (i.Contrato || i.CONTRATO || '').toLowerCase().includes('arriendo');
 
                 totalMercadoGlobal += val; depGlobal += dep;
                 if (isLineaArriendo) { totalMercadoLinea += val; depLinea += dep; }
                 if (isArrendado) {
                     totalMercadoArrendados += val; depArrendados += dep;
-                    if(textToSearch.includes('espresso') || textToSearch.includes('máquina') || textToSearch.includes('maquina') || textToSearch.includes('cafetera')) { ingresoMensualArriendos += (5 * VALOR_UF); } 
-                    else if(textToSearch.includes('molino')) { ingresoMensualArriendos += (1.5 * VALOR_UF); }
+                    
+                    // REGLA DE NEGOCIO: Excepción Contrato Equifax (42 UF / 4 equipos = 10.5 c/u)
+                    if(textToSearch.includes('equifax')) {
+                        ingresoMensualArriendos += (10.5 * VALOR_UF);
+                    } 
+                    else if(textToSearch.includes('espresso') || textToSearch.includes('máquina') || textToSearch.includes('maquina') || textToSearch.includes('cafetera') || textToSearch.includes('icba') || textToSearch.includes('bunn')) { 
+                        ingresoMensualArriendos += (5 * VALOR_UF); 
+                    } 
+                    else if(textToSearch.includes('molino')) { 
+                        ingresoMensualArriendos += (1.5 * VALOR_UF); 
+                    }
                 }
             });
 
             const revEl = document.getElementById('kpi-revenue'); if(revEl) revEl.innerText = formatCurrency(ingresoMensualArriendos);
             let ingresoAnualEst = ingresoMensualArriendos * 12;
             const formatROA = (val) => { if (val > 0) return `<span class="text-emerald-500">+${val}%</span>`; if (val < 0) return `<span class="text-rose-500">${val}%</span>`; return `${val}%`; };
+            
             let roa1 = totalMercadoGlobal > 0 ? (((ingresoAnualEst - depGlobal) / totalMercadoGlobal) * 100).toFixed(1) : 0;
             let roa2 = totalMercadoLinea > 0 ? (((ingresoAnualEst - depLinea) / totalMercadoLinea) * 100).toFixed(1) : 0;
             let roa3 = totalMercadoArrendados > 0 ? (((ingresoAnualEst - depArrendados) / totalMercadoArrendados) * 100).toFixed(1) : 0;
