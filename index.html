@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIAF 2026 - Buscador y Detalles</title>
+    <title>SIAF 2026 - Gestión Jerárquica de Activos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -24,14 +24,13 @@
         .breadcrumb-link:hover { color: white; text-decoration: underline; }
 
         .table-container { overflow-x: auto; background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .data-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 800px; }
-        .data-table th { background-color: #f8fafc; padding: 1rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 800; border-bottom: 1px solid #e2e8f0; cursor: pointer; user-select: none; transition: background 0.2s; }
+        .data-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 900px; }
+        .data-table th { background-color: #f8fafc; padding: 1rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 800; border-bottom: 1px solid #e2e8f0; cursor: pointer; user-select: none; }
         .data-table th:hover { background-color: #f1f5f9; color: #4f46e5; }
         .data-table td { padding: 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-        .data-table tr:last-child td { border-bottom: none; }
         .data-table tr:hover { background-color: #f8fafc; }
         
-        .filter-input { width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; font-size: 0.875rem; outline: none; transition: all 0.2s; }
+        .filter-input { width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; font-size: 0.875rem; outline: none; }
         .filter-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
     </style>
 </head>
@@ -67,25 +66,22 @@
                 <div onclick="startNav('Inventario General', {})" class="glass-card p-5 border-l-4 border-indigo-600 bg-indigo-50">
                     <div class="flex justify-between items-start"><p class="text-[10px] font-black text-indigo-800 uppercase">Inventario</p><i class="fa-solid fa-folder-tree text-indigo-400"></i></div>
                     <div id="kpi-total" class="text-3xl font-black text-indigo-900 mt-1">---</div>
-                    <p class="text-[9px] text-indigo-600 font-bold mt-2">NAVEGAR ›</p>
+                    <p class="text-[9px] text-indigo-600 font-bold mt-2 tracking-wide">NAVEGAR POR FAMILIA ›</p>
                 </div>
-
-                <div onclick="openMasterSearch()" class="glass-card p-5 border-l-4 border-slate-800 bg-slate-900 text-white hover:bg-slate-800">
+                <div onclick="openMasterSearch()" class="glass-card p-5 border-l-4 border-slate-800 bg-slate-900 text-white">
                     <div class="flex justify-between items-start"><p class="text-[10px] font-black text-slate-300 uppercase">Buscador</p><i class="fa-solid fa-search text-slate-500"></i></div>
                     <div class="text-xl font-black mt-2 leading-tight">Filtros<br>Maestros</div>
-                    <p class="text-[9px] text-slate-400 font-bold mt-2">BUSCAR AHORA ›</p>
                 </div>
-
                 <div onclick="startNav('Operación', {Estado: 'Uso Operacion'})" class="glass-card p-5 border-l-4 border-emerald-500">
-                    <div class="flex justify-between items-start"><p class="text-[10px] font-bold text-slate-400 uppercase">Operación</p><i class="fa-solid fa-circle-check text-emerald-200"></i></div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Operación</p>
                     <div id="kpi-op" class="text-3xl font-black text-emerald-600 mt-1">---</div>
                 </div>
                 <div onclick="startNav('Mantención', {Estado: 'En Mantencion'})" class="glass-card p-5 border-l-4 border-amber-500">
-                    <div class="flex justify-between items-start"><p class="text-[10px] font-bold text-slate-400 uppercase">Mantención</p><i class="fa-solid fa-screwdriver-wrench text-amber-200"></i></div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Mantención</p>
                     <div id="kpi-maint" class="text-3xl font-black text-amber-500 mt-1">---</div>
                 </div>
                 <div onclick="startNav('En Riesgo', {Riesgo: true})" class="glass-card p-5 border-l-4 border-rose-500">
-                    <div class="flex justify-between items-start"><p class="text-[10px] font-bold text-slate-400 uppercase">En Riesgo</p><i class="fa-solid fa-triangle-exclamation text-rose-200"></i></div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">En Riesgo</p>
                     <div id="kpi-risk" class="text-3xl font-black text-rose-500 mt-1">---</div>
                 </div>
             </div>
@@ -94,25 +90,26 @@
                 <div class="glass-card-static p-6"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Estado Operativo</h3><div class="h-56"><canvas id="chartEstado"></canvas></div></div>
                 <div class="glass-card-static p-6"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Sucursal Responsable</h3><div class="h-56"><canvas id="chartSucursal"></canvas></div></div>
                 <div class="glass-card-static p-6"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Top Bodegas / Ubicaciones</h3><div class="h-56"><canvas id="chartFisica"></canvas></div></div>
-                <div onclick="startNav('Todas las Categorías', {})" class="glass-card p-6 border-2 border-transparent hover:border-indigo-500"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Inventario por Familia</h3><div class="h-56"><canvas id="chartCat"></canvas></div></div>
+                <div onclick="startNav('Todas las Familias', {})" class="glass-card p-6 border-2 border-transparent hover:border-indigo-500"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Inventario por Familia</h3><div class="h-56"><canvas id="chartCat"></canvas></div></div>
             </div>
         </section>
 
         <section id="view-search" class="view-section">
             <h2 class="text-2xl font-black text-slate-800 uppercase mb-1">Buscador Maestro de Activos</h2>
-            <p class="text-xs font-bold text-slate-400 mb-6">Utilice los filtros o haga clic en las cabeceras de la tabla para ordenar.</p>
-            
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="relative md:col-span-1">
-                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="ms-text" onkeyup="applyMasterFilters()" placeholder="Buscar Modelo, Serie o Marca..." class="filter-input pl-10">
-                </div>
-                <div><select id="ms-cat" onchange="applyMasterFilters()" class="filter-input"><option value="">Todas las Categorías</option></select></div>
-                <div><select id="ms-est" onchange="applyMasterFilters()" class="filter-input"><option value="">Todos los Estados</option></select></div>
-                <div><select id="ms-suc" onchange="applyMasterFilters()" class="filter-input"><option value="">Todas las Sucursales</option></select></div>
+            <p class="text-xs font-bold text-slate-400 mb-6">Filtros inteligentes y ordenamiento dinámico.</p>
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-6 grid grid-cols-1 md:grid-cols-5 gap-3">
+                <input type="text" id="ms-text" onkeyup="applyMasterFilters()" placeholder="Modelo, Serie o Marca..." class="filter-input md:col-span-1">
+                <select id="ms-fam" onchange="applyMasterFilters()" class="filter-input"><option value="">Todas las Familias</option></select>
+                <select id="ms-cat" onchange="applyMasterFilters()" class="filter-input"><option value="">Todas las Categorías</option></select>
+                <select id="ms-est" onchange="applyMasterFilters()" class="filter-input"><option value="">Todos los Estados</option></select>
+                <select id="ms-suc" onchange="applyMasterFilters()" class="filter-input"><option value="">Todas las Sucursales</option></select>
             </div>
-
             <div id="table-master-container" class="table-container"></div>
+        </section>
+
+        <section id="view-families" class="view-section">
+            <h2 id="title-families" class="text-2xl font-black text-slate-800 uppercase mb-6"></h2>
+            <div id="grid-families" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </section>
 
         <section id="view-categories" class="view-section">
@@ -128,7 +125,7 @@
         <section id="view-materials" class="view-section">
             <div class="mb-6 space-y-4">
                 <h2 id="title-materials" class="text-2xl font-black text-slate-800 uppercase mb-1"></h2>
-                <input type="text" id="search-materials" onkeyup="searchMaterials(this.value)" placeholder="Filtrar en esta lista específica..." class="filter-input">
+                <input type="text" id="search-materials" onkeyup="searchMaterials(this.value)" placeholder="Filtrar en esta tabla..." class="filter-input">
             </div>
             <div id="table-materials-container" class="table-container"></div>
         </section>
@@ -140,11 +137,11 @@
     </main>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycby36cA1fdHcHZBlq3ZXh65qXzgX_c1ujI-c296gMt3e_SfzPA3tC6Mqu55DAmFeJvwj/exec'; // <-- REEMPLAZAR AQUÍ CON TU URL
+        const API_URL = 'https://script.google.com/macros/s/AKfycby36cA1fdHcHZBlq3ZXh65qXzgX_c1ujI-c296gMt3e_SfzPA3tC6Mqu55DAmFeJvwj/exec'; 
         let rawData = [];
         let navStack = []; 
         let currentFilteredData = [];
-        let chartInstances = { estado: null, sucursal: null, fisica: null, cat: null };
+        let chartInstances = {};
         let masterFilteredData = [];
         let currentSort = { column: 'ID', asc: true };
 
@@ -155,9 +152,10 @@
                 document.getElementById('items-count').innerText = rawData.length;
                 updateDashboard();
                 populateMasterDropdowns();
-            } catch (e) { console.error("Error API", e); }
+            } catch (e) { console.error(e); }
         }
 
+        // --- NAVEGACIÓN ---
         function popNav(index) {
             if (index === -1) {
                 navStack = []; 
@@ -171,7 +169,7 @@
             processNavState();
         }
 
-        function startNav(title, query) { navStack = [{ title, query, view: 'categories' }]; processNavState(); }
+        function startNav(title, query) { navStack = [{ title, query, view: 'families' }]; processNavState(); }
         function pushNav(title, query, view) { navStack.push({ title, query: { ...navStack[navStack.length-1].query, ...query }, view }); processNavState(); }
 
         function processNavState() {
@@ -195,224 +193,185 @@
             document.getElementById('view-' + current.view).classList.add('active');
             window.scrollTo(0,0);
 
-            if (current.view === 'categories') { document.getElementById('title-categories').innerText = current.title; renderCategoriesGrid(); }
-            else if (current.view === 'subcategories') { document.getElementById('title-subcategories').innerText = current.title; renderSubcategoriesGrid(); }
-            else if (current.view === 'materials') { document.getElementById('title-materials').innerText = current.title; document.getElementById('search-materials').value = ''; renderMaterialsTable(currentFilteredData); }
-            else if (current.view === 'search') { /* Master search handled */ }
-            else if (current.view === 'detail') { renderDetail(); }
+            if (current.view === 'families') renderFamiliesGrid();
+            else if (current.view === 'categories') renderCategoriesGrid();
+            else if (current.view === 'subcategories') renderSubcategoriesGrid();
+            else if (current.view === 'materials') renderMaterialsTable(currentFilteredData);
+            else if (current.view === 'detail') renderDetail();
         }
 
+        // --- RENDERIZADORES ---
+        function renderFamiliesGrid() {
+            const current = navStack[navStack.length - 1];
+            const families = [...new Set(currentFilteredData.map(i => i.Familia || 'Sin Familia'))];
+            document.getElementById('title-families').innerText = current.title;
+            document.getElementById('grid-families').innerHTML = families.map(f => `
+                <div onclick="pushNav('${f}', {Familia: '${f}'}, 'categories')" class="glass-card p-6 flex justify-between items-center group">
+                    <div><h4 class="font-bold text-slate-700">${f}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${currentFilteredData.filter(i=>i.Familia===f).length} Items</p></div>
+                    <i class="fa-solid fa-layer-group text-slate-200 group-hover:text-indigo-600"></i>
+                </div>`).join('');
+        }
+
+        function renderCategoriesGrid() {
+            const current = navStack[navStack.length - 1];
+            const cats = [...new Set(currentFilteredData.map(i => i.Categoria))];
+            document.getElementById('title-categories').innerText = current.title;
+            document.getElementById('grid-categories').innerHTML = cats.map(c => `
+                <div onclick="pushNav('${c}', {Categoria: '${c}'}, 'subcategories')" class="glass-card p-6 flex justify-between items-center group">
+                    <div><h4 class="font-bold text-slate-700">${c}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${currentFilteredData.filter(i=>i.Categoria===c).length} Items</p></div>
+                    <i class="fa-solid fa-folder-open text-slate-200 group-hover:text-indigo-600"></i>
+                </div>`).join('');
+        }
+
+        function renderSubcategoriesGrid() {
+            const current = navStack[navStack.length - 1];
+            const marcas = [...new Set(currentFilteredData.map(i => i.Marca || 'Genérico'))];
+            document.getElementById('title-subcategories').innerText = current.title;
+            document.getElementById('grid-subcategories').innerHTML = marcas.map(m => `
+                <div onclick="pushNav('${m}', {Marca: '${m === 'Genérico' ? '' : m}'}, 'materials')" class="glass-card p-6 flex justify-between items-center group">
+                    <div><span class="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 mb-2 inline-block">MARCA</span><h4 class="font-bold text-slate-800">${m}</h4></div>
+                    <i class="fa-solid fa-tag text-slate-200 group-hover:text-indigo-600"></i>
+                </div>`).join('');
+        }
+
+        function renderMaterialsTable(list) {
+            document.getElementById('title-materials').innerText = navStack[navStack.length-1].title;
+            const container = document.getElementById('table-materials-container');
+            let html = `<table class="data-table"><thead><tr><th>Marca</th><th>Modelo</th><th>Serie</th><th>Estado</th><th class="text-center">Acción</th></tr></thead><tbody>`;
+            html += list.map(i => `<tr>
+                <td class="font-semibold text-slate-600">${i.Marca || 'Genérico'}</td>
+                <td class="font-bold text-slate-900">${i.Modelo || i['MODELO/Nombre']}</td>
+                <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || i['N° SERIE']}</td>
+                <td><span class="text-[9px] font-bold px-2 py-1 rounded-full ${i.Estado.includes('Operacion') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span></td>
+                <td class="text-center"><button onclick="pushNav('Detalle de Material', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 border border-indigo-200 px-3 py-1 rounded text-xs font-bold hover:bg-indigo-600 hover:text-white transition-colors">Detalle</button></td>
+            </tr>`).join('');
+            container.innerHTML = html + `</tbody></table>`;
+        }
+
+        function searchMaterials(q) {
+            const f = currentFilteredData.filter(i => (i.Modelo||i['MODELO/Nombre']||'').toLowerCase().includes(q.toLowerCase()) || (i['N Serie']||i['N° SERIE']||'').toLowerCase().includes(q.toLowerCase()));
+            renderMaterialsTable(f);
+        }
+
+        function renderDetail() {
+            const i = currentFilteredData[0];
+            document.getElementById('item-ficha').innerHTML = `
+                <div class="glass-card-static overflow-hidden shadow-2xl">
+                    <div class="bg-indigo-600 p-8 text-white text-center relative">
+                        <i class="fa-solid fa-boxes-stacked absolute top-4 right-4 opacity-10 text-6xl"></i>
+                        <h2 class="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-2">Detalle de Material</h2>
+                        <h3 class="text-2xl font-black">${i.Modelo || i['MODELO/Nombre'] || '---'}</h3>
+                        <p class="text-[11px] uppercase opacity-90 mt-2">${i.Familia || 'Sin Familia'} / ${i.Categoria}</p>
+                    </div>
+                    <div class="p-6 md:p-8 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Número de Serie</p><p class="font-mono font-bold text-base text-indigo-600">${i['N Serie'] || i['N° SERIE'] || '---'}</p></div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Estado</p><p class="font-bold text-sm text-slate-800">${i.Estado}</p></div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Condición</p><p class="font-bold text-sm text-slate-800">${i.Condicion || i.CONDICION || '---'}</p></div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100"><p class="text-indigo-400 font-bold uppercase text-[9px] mb-1">Sucursal Responsable</p><p class="font-bold text-sm text-indigo-900">${i['Sucursal Responsable'] || i['SUCURSAL RESPONSABLE'] || '---'}</p></div>
+                            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100"><p class="text-indigo-400 font-bold uppercase text-[9px] mb-1">Ubicación Física</p><p class="font-bold text-sm text-indigo-900">${i['Ubicacion Fisica'] || i['UBICACION FISICA'] || '---'}</p></div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[10px]">
+                            <div class="p-2 border-b"><p class="text-slate-400 font-bold uppercase">Proveedor</p><p class="font-bold">${i.Proveedor || i.PROVEEDOR || '---'}</p></div>
+                            <div class="p-2 border-b"><p class="text-slate-400 font-bold uppercase">Factura/Guía</p><p class="font-bold">${i['N° GUIA / FAC'] || i['Nro Factura'] || '---'}</p></div>
+                            <div class="p-2 border-b"><p class="text-slate-400 font-bold uppercase">Valor Neto</p><p class="font-bold text-emerald-600">${i['Valor Compra Neto'] || '---'}</p></div>
+                            <div class="p-2 border-b"><p class="text-slate-400 font-bold uppercase">Adquisición</p><p class="font-bold">${i['Fecha Adquisicion'] || i['Fecha Revision'] || '---'}</p></div>
+                        </div>
+                        <div class="bg-amber-50 p-5 rounded-xl border-l-4 border-amber-400"><p class="font-bold text-amber-700 uppercase text-[10px] mb-1">Observaciones</p><p class="text-sm text-slate-700 italic">"${i.Observaciones || i.OBS || 'Sin observaciones.'}"</p></div>
+                        <button onclick="popNav(navStack.length - 2)" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm shadow-lg">Volver al Material</button>
+                    </div>
+                </div>`;
+        }
+
+        // --- BUSCADOR MAESTRO ---
         function populateMasterDropdowns() {
-            const populate = (id, field) => {
-                const unique = [...new Set(rawData.map(i => i[field]).filter(Boolean))].sort();
-                document.getElementById(id).innerHTML += unique.map(val => `<option value="${val}">${val}</option>`).join('');
+            const p = (id, f) => {
+                const u = [...new Set(rawData.map(i => i[f]).filter(Boolean))].sort();
+                document.getElementById(id).innerHTML += u.map(v => `<option value="${v}">${v}</option>`).join('');
             };
-            populate('ms-cat', 'Categoria');
-            populate('ms-est', 'Estado');
-            populate('ms-suc', 'Sucursal Responsable');
+            p('ms-fam', 'Familia'); p('ms-cat', 'Categoria'); p('ms-est', 'Estado'); p('ms-suc', 'Sucursal Responsable');
         }
 
         function openMasterSearch() {
             navStack = [{ title: 'Buscador Maestro', query: {}, view: 'search' }];
             document.getElementById('ms-text').value = '';
+            document.getElementById('ms-fam').value = '';
             document.getElementById('ms-cat').value = '';
             document.getElementById('ms-est').value = '';
             document.getElementById('ms-suc').value = '';
-            masterFilteredData = [...rawData];
-            applyMasterFilters(); 
+            applyMasterFilters();
             processNavState();
         }
 
         function applyMasterFilters() {
-            const text = document.getElementById('ms-text').value.toLowerCase();
-            const cat = document.getElementById('ms-cat').value;
-            const est = document.getElementById('ms-est').value;
-            const suc = document.getElementById('ms-suc').value;
+            const t = document.getElementById('ms-text').value.toLowerCase();
+            const f = document.getElementById('ms-fam').value;
+            const c = document.getElementById('ms-cat').value;
+            const e = document.getElementById('ms-est').value;
+            const s = document.getElementById('ms-suc').value;
 
             masterFilteredData = rawData.filter(i => {
-                const matchText = (i.Modelo||'').toLowerCase().includes(text) || (i.Marca||'').toLowerCase().includes(text) || (i['N Serie']||'').toLowerCase().includes(text);
-                const matchCat = cat === "" || i.Categoria === cat;
-                const matchEst = est === "" || i.Estado === est;
-                const matchSuc = suc === "" || i['Sucursal Responsable'] === suc;
-                return matchText && matchCat && matchEst && matchSuc;
+                const mt = (i.Modelo||'').toLowerCase().includes(t) || (i.Marca||'').toLowerCase().includes(t) || (i['N Serie']||'').toLowerCase().includes(t);
+                const mf = f === "" || i.Familia === f;
+                const mc = c === "" || i.Categoria === c;
+                const me = e === "" || i.Estado === e;
+                const ms = s === "" || i['Sucursal Responsable'] === s;
+                return mt && mf && mc && me && ms;
             });
             sortMasterTable(currentSort.column, false);
         }
 
-        function sortMasterTable(column, toggle = true) {
-            if (toggle) {
-                currentSort.asc = (currentSort.column === column) ? !currentSort.asc : true;
-                currentSort.column = column;
-            }
+        function sortMasterTable(col, toggle = true) {
+            if (toggle) { currentSort.asc = (currentSort.column === col) ? !currentSort.asc : true; currentSort.column = col; }
             masterFilteredData.sort((a, b) => {
-                let valA = (a[column] || '').toString().toLowerCase();
-                let valB = (b[column] || '').toString().toLowerCase();
-                if (valA < valB) return currentSort.asc ? -1 : 1;
-                if (valA > valB) return currentSort.asc ? 1 : -1;
+                let vA = (a[col] || '').toString().toLowerCase();
+                let vB = (b[col] || '').toString().toLowerCase();
+                if (vA < vB) return currentSort.asc ? -1 : 1;
+                if (vA > vB) return currentSort.asc ? 1 : -1;
                 return 0;
             });
             drawMasterTable();
         }
 
         function getSortIcon(col) {
-            if (currentSort.column !== col) return '<i class="fa-solid fa-sort text-slate-300 ml-1"></i>';
+            if (currentSort.column !== col) return '<i class="fa-solid fa-sort opacity-30 ml-1"></i>';
             return currentSort.asc ? '<i class="fa-solid fa-sort-up text-indigo-600 ml-1"></i>' : '<i class="fa-solid fa-sort-down text-indigo-600 ml-1"></i>';
         }
 
         function drawMasterTable() {
             const container = document.getElementById('table-master-container');
-            if (masterFilteredData.length === 0) {
-                container.innerHTML = '<div class="p-8 text-center text-slate-500"><p>No se encontraron equipos.</p></div>';
-                return;
-            }
-
-            let html = `
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th onclick="sortMasterTable('Marca')">Marca ${getSortIcon('Marca')}</th>
-                            <th onclick="sortMasterTable('Modelo')">Modelo ${getSortIcon('Modelo')}</th>
-                            <th onclick="sortMasterTable('N Serie')">N° Serie ${getSortIcon('N Serie')}</th>
-                            <th onclick="sortMasterTable('Categoria')">Categoría ${getSortIcon('Categoria')}</th>
-                            <th onclick="sortMasterTable('Estado')">Estado ${getSortIcon('Estado')}</th>
-                            <th onclick="sortMasterTable('Sucursal Responsable')">Sucursal ${getSortIcon('Sucursal Responsable')}</th>
-                            <th class="text-center">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-sm">
-            `;
-
-            html += masterFilteredData.map(i => `
-                <tr>
-                    <td class="font-semibold text-slate-600">${i.Marca || 'Genérico'}</td>
-                    <td class="font-bold text-slate-900">${i.Modelo || i['MODELO/Nombre'] || ''}</td>
-                    <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || i['N° SERIE'] || '---'}</td>
-                    <td class="text-xs text-slate-500">${i.Categoria}</td>
-                    <td><span class="text-[9px] font-bold px-2 py-1 rounded-full ${i.Estado === 'Uso Operacion' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span></td>
-                    <td class="text-xs">${i['Sucursal Responsable'] || i['SUCURSAL RESPONSABLE'] || '---'}</td>
-                    <td class="text-center">
-                        <button onclick="pushNav('Detalle de Material', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 hover:text-white hover:bg-indigo-600 text-xs font-bold px-3 py-1 rounded transition-colors border border-indigo-200">Detalle</button>
-                    </td>
-                </tr>
-            `).join('');
+            let html = `<table class="data-table"><thead><tr><th onclick="sortMasterTable('Familia')">Familia ${getSortIcon('Familia')}</th><th onclick="sortMasterTable('Marca')">Marca ${getSortIcon('Marca')}</th><th onclick="sortMasterTable('Modelo')">Modelo ${getSortIcon('Modelo')}</th><th onclick="sortMasterTable('N Serie')">Serie ${getSortIcon('N Serie')}</th><th onclick="sortMasterTable('Estado')">Estado ${getSortIcon('Estado')}</th><th class="text-center">Acción</th></tr></thead><tbody>`;
+            html += masterFilteredData.map(i => `<tr>
+                <td class="text-xs text-slate-500 font-bold">${i.Familia || '---'}</td>
+                <td class="font-semibold text-slate-600">${i.Marca || 'Genérico'}</td>
+                <td class="font-bold text-slate-900">${i.Modelo || i['MODELO/Nombre']}</td>
+                <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || i['N° SERIE']}</td>
+                <td><span class="text-[9px] font-bold px-2 py-1 rounded-full ${i.Estado.includes('Operacion') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span></td>
+                <td class="text-center"><button onclick="pushNav('Detalle de Material', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 hover:bg-indigo-600 hover:text-white px-3 py-1 rounded border border-indigo-200 text-xs font-bold transition-all">Ver</button></td>
+            </tr>`).join('');
             container.innerHTML = html + `</tbody></table>`;
-        }
-
-        function renderCategoriesGrid() {
-            const cats = [...new Set(currentFilteredData.map(i => i.Categoria))];
-            document.getElementById('grid-categories').innerHTML = cats.map(c => `
-                <div onclick="pushNav('${c}', {Categoria: '${c}'}, 'subcategories')" class="glass-card p-6 flex justify-between items-center">
-                    <div><h4 class="font-bold text-slate-700">${c}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${currentFilteredData.filter(i=>i.Categoria===c).length} Items</p></div>
-                    <i class="fa-solid fa-folder-open text-slate-200"></i>
-                </div>`).join('');
-        }
-
-        function renderSubcategoriesGrid() {
-            const marcas = [...new Set(currentFilteredData.map(i => i.Marca || 'Genérico'))];
-            document.getElementById('grid-subcategories').innerHTML = marcas.map(m => `
-                <div onclick="pushNav('${m}', {Marca: '${m === 'Genérico' ? '' : m}'}, 'materials')" class="glass-card p-6 flex justify-between items-center">
-                    <div><span class="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 mb-2 inline-block">FAMILIA / MARCA</span><h4 class="font-bold text-slate-800">${m}</h4></div>
-                    <i class="fa-solid fa-tag text-slate-200"></i>
-                </div>`).join('');
-        }
-
-        function renderMaterialsTable(list) {
-            const container = document.getElementById('table-materials-container');
-            if (list.length === 0) { container.innerHTML = '<div class="p-6 text-center text-slate-500">Vacío.</div>'; return; }
-            let html = `<table class="data-table"><thead><tr><th>Marca</th><th>Modelo</th><th>N° Serie</th><th>Estado</th><th class="text-center">Acción</th></tr></thead><tbody>`;
-            html += list.map(i => `<tr>
-                    <td class="font-semibold text-slate-600">${i.Marca || 'Genérico'}</td>
-                    <td class="font-bold text-slate-900">${i.Modelo || i['MODELO/Nombre'] || ''}</td>
-                    <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || i['N° SERIE'] || '---'}</td>
-                    <td><span class="text-[9px] font-bold px-2 py-1 rounded-full ${i.Estado === 'Uso Operacion' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span></td>
-                    <td class="text-center"><button onclick="pushNav('Detalle de Material', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white transition-colors border border-indigo-200 px-3 py-1 rounded font-bold text-xs">Detalle</button></td>
-                </tr>`).join('');
-            container.innerHTML = html + `</tbody></table>`;
-        }
-
-        function searchMaterials(q) {
-            renderMaterialsTable(currentFilteredData.filter(i => (i.Modelo||i['MODELO/Nombre']||'').toLowerCase().includes(q.toLowerCase()) || (i['N Serie']||i['N° SERIE']||'').toLowerCase().includes(q.toLowerCase())));
-        }
-
-        // --- DETALLE DE MATERIAL (VISTA AMPLIADA) ---
-        function renderDetail() {
-            const i = currentFilteredData[0];
-            document.getElementById('item-ficha').innerHTML = `
-                <div class="glass-card-static overflow-hidden shadow-2xl">
-                    <div class="bg-indigo-600 p-8 text-white text-center relative">
-                        <i class="fa-solid fa-boxes-stacked absolute top-4 right-4 opacity-20 text-5xl"></i>
-                        <h2 class="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-2">Detalle de Material</h2>
-                        <h3 class="text-2xl font-black">${i.Modelo || i['MODELO/Nombre'] || '---'}</h3>
-                        <p class="text-[11px] uppercase opacity-90 mt-2">${i.Categoria} | ${i.Marca || 'Genérico'}</p>
-                    </div>
-                    
-                    <div class="p-6 md:p-8 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                <p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Número de Serie</p>
-                                <p class="font-mono font-bold text-base text-indigo-600">${i['N Serie'] || i['N° SERIE'] || 'No Registrado'}</p>
-                            </div>
-                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                <p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Estado Operativo</p>
-                                <p class="font-bold text-sm text-slate-800">${i.Estado || '---'}</p>
-                            </div>
-                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                <p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Condición Técnica</p>
-                                <p class="font-bold text-sm text-slate-800">${i.Condicion || i.CONDICION || '---'}</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
-                                <p class="text-indigo-400 font-bold uppercase text-[9px] mb-1">Sucursal Responsable</p>
-                                <p class="font-bold text-sm text-indigo-900">${i['Sucursal Responsable'] || i['SUCURSAL RESPONSABLE'] || '---'}</p>
-                            </div>
-                            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
-                                <p class="text-indigo-400 font-bold uppercase text-[9px] mb-1">Ubicación Física Exacta</p>
-                                <p class="font-bold text-sm text-indigo-900">${i['Ubicacion Fisica'] || i['UBICACION FISICA'] || '---'}</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                            <div class="p-3 border-b border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Contrato</p><p class="font-bold text-slate-700">${i.Contrato || '---'}</p></div>
-                            <div class="p-3 border-b border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Guía / Factura N°</p><p class="font-bold text-slate-700">${i['N° GUIA / FAC'] || i['Nro Factura'] || '---'}</p></div>
-                            <div class="p-3 border-b border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Proveedor</p><p class="font-bold text-slate-700">${i.Proveedor || i.PROVEEDOR || '---'}</p></div>
-                            <div class="p-3 border-b border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px]">Valor Adquisición</p><p class="font-bold text-emerald-600">${i['Valor Compra Neto'] || '---'} <span class="text-[9px] text-slate-400 font-normal block">${i['Fecha Adquisicion'] || i['Fecha Revision'] || ''}</span></p></div>
-                        </div>
-
-                        <div class="bg-amber-50 p-5 rounded-xl border-l-4 border-amber-400">
-                            <p class="font-bold text-amber-700 uppercase text-[10px] mb-2"><i class="fa-solid fa-note-sticky mr-1"></i> Observaciones</p>
-                            <p class="text-sm text-slate-700 italic">"${i.Observaciones || i.OBS || 'No se han registrado observaciones adicionales para este material.'}"</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-6">
-                    <button onclick="popNav(navStack.length - 2)" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-arrow-left mr-2"></i> Volver atrás</button>
-                </div>`;
         }
 
         function updateDashboard() {
             document.getElementById('kpi-total').innerText = rawData.length;
-            document.getElementById('kpi-op').innerText = rawData.filter(i => i.Estado === "Uso Operacion").length;
-            document.getElementById('kpi-maint').innerText = rawData.filter(i => i.Estado === "En Mantencion").length;
+            document.getElementById('kpi-op').innerText = rawData.filter(i => i.Estado.includes("Operacion")).length;
+            document.getElementById('kpi-maint').innerText = rawData.filter(i => i.Estado.includes("Mantencion")).length;
             document.getElementById('kpi-risk').innerText = rawData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado)).length;
             
-            const ctxE = document.getElementById('chartEstado'), ctxS = document.getElementById('chartSucursal'), ctxF = document.getElementById('chartFisica'), ctxC = document.getElementById('chartCat');
             if(chartInstances.estado) Object.values(chartInstances).forEach(c => c.destroy());
+            const gc = (k) => rawData.reduce((acc, i) => { let v = i[k]; if(v) acc[v] = (acc[v]||0)+1; return acc; }, {});
             
-            const getCounts = (key) => rawData.reduce((acc, i) => { 
-                let val = i[key] || i[key.toUpperCase()]; 
-                if(val) acc[val] = (acc[val]||0)+1; 
-                return acc; 
-            }, {});
+            const common = { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}} };
+            chartInstances.estado = new Chart(document.getElementById('chartEstado'), { type:'doughnut', data:{ labels:Object.keys(gc('Estado')), datasets:[{data:Object.values(gc('Estado')), backgroundColor:['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6']}] }, options:common });
+            chartInstances.sucursal = new Chart(document.getElementById('chartSucursal'), { type:'doughnut', data:{ labels:Object.keys(gc('Sucursal Responsable')), datasets:[{data:Object.values(gc('Sucursal Responsable')), backgroundColor:['#6366f1','#10b981','#f59e0b']}] }, options:common });
             
-            chartInstances.estado = new Chart(ctxE, { type:'doughnut', data:{ labels:Object.keys(getCounts('Estado')), datasets:[{data:Object.values(getCounts('Estado')), backgroundColor:['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6']}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}}} });
-            chartInstances.sucursal = new Chart(ctxS, { type:'doughnut', data:{ labels:Object.keys(getCounts('Sucursal Responsable')), datasets:[{data:Object.values(getCounts('Sucursal Responsable')), backgroundColor:['#6366f1','#10b981','#f59e0b']}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}}} });
+            let ubi = gc('Ubicacion Fisica'), topUbi = Object.entries(ubi).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            chartInstances.fisica = new Chart(document.getElementById('chartFisica'), { type:'pie', data:{ labels:topUbi.map(u=>u[0]), datasets:[{data:topUbi.map(u=>u[1]), backgroundColor:['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9']}] }, options:common });
             
-            let ubi = getCounts('Ubicacion Fisica'), topUbi = Object.entries(ubi).sort((a,b)=>b[1]-a[1]).slice(0,5);
-            chartInstances.fisica = new Chart(ctxF, { type:'pie', data:{ labels:topUbi.map(u=>u[0]), datasets:[{data:topUbi.map(u=>u[1]), backgroundColor:['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9']}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}}} });
-            
-            chartInstances.cat = new Chart(ctxC, { type:'bar', data:{ labels:Object.keys(getCounts('Categoria')).map(c=>c.substring(0,10)+'.'), datasets:[{data:Object.values(getCounts('Categoria')), backgroundColor:'#6366f1'}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}}} });
+            let fam = gc('Familia');
+            chartInstances.cat = new Chart(document.getElementById('chartCat'), { type:'bar', data:{ labels:Object.keys(fam).map(c=>c.substring(0,10)), datasets:[{data:Object.values(fam), backgroundColor:'#6366f1'}] }, options:{...common, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}}} });
         }
 
         window.onload = init;
