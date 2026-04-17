@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIAF 2026 - BI & Análisis Financiero</title>
+    <title>Control de Activo Fijo Empresarial - BI & Análisis Financiero</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -50,7 +50,7 @@
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-3 cursor-pointer" onclick="popNav(-1)">
                 <i class="fa-solid fa-boxes-stacked text-xl"></i>
-                <h1 class="font-extrabold text-lg tracking-tight uppercase hidden lg:block">SIAF 2026</h1>
+                <h1 class="font-extrabold text-lg tracking-tight uppercase hidden lg:block">Control de Activo Fijo Empresarial</h1>
             </div>
             
             <div class="flex items-center gap-2 sm:gap-3">
@@ -335,7 +335,7 @@
             }
         }
 
-        // --- SISTEMA DASHBOARD MODULAR ---
+        // --- DASHBOARD BI Y CÁLCULOS ROA ---
         function initDashboardFilters() {
             const buildOpts = (key, id) => {
                 const el = document.getElementById(id);
@@ -371,21 +371,23 @@
                 return matchF && matchC && matchS;
             });
             
-            // KPIs Operativos
             document.getElementById('kpi-total').innerText = dashboardFilteredData.length;
             document.getElementById('kpi-op').innerText = dashboardFilteredData.filter(i => (i.Estado||'').includes("Operacion")).length;
             document.getElementById('kpi-maint').innerText = dashboardFilteredData.filter(i => (i.Estado||'').includes("Mantencion")).length;
             document.getElementById('kpi-risk').innerText = dashboardFilteredData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado || '')).length;
             
-            // Arriendo y Comodato
+            const totalMercado = dashboardFilteredData.reduce((sum, i) => sum + getMarketValue(i), 0);
+            document.getElementById('kpi-valor').innerText = formatCurrency(totalMercado);
+
             const arrItems = dashboardFilteredData.filter(i => (i.Contrato || i.CONTRATO || '').toLowerCase().includes('arriendo'));
             const comItems = dashboardFilteredData.filter(i => (i.Contrato || i.CONTRATO || '').toLowerCase().includes('comodato'));
+
             document.getElementById('kpi-arr-count').innerText = arrItems.length;
             document.getElementById('kpi-arr-val').innerText = formatCurrency(arrItems.reduce((sum, i) => sum + getMarketValue(i), 0));
             document.getElementById('kpi-com-count').innerText = comItems.length;
             document.getElementById('kpi-com-val').innerText = formatCurrency(comItems.reduce((sum, i) => sum + getMarketValue(i), 0));
 
-            // --- LÓGICA DE ROA MULTINIVEL ---
+            // CÁLCULO DE INGRESOS Y ROA
             let totalMercadoGlobal = 0; let depGlobal = 0;
             let totalMercadoLinea = 0; let depLinea = 0;
             let totalMercadoArrendados = 0; let depArrendados = 0;
@@ -399,17 +401,14 @@
                 let isLineaArriendo = textToSearch.includes('espresso') || textToSearch.includes('máquina') || textToSearch.includes('maquina') || textToSearch.includes('molino') || textToSearch.includes('cafetera');
                 let isArrendado = (i.Contrato || i.CONTRATO || '').toLowerCase().includes('arriendo');
 
-                // 1. Nivel Global (Todos los activos)
                 totalMercadoGlobal += val;
                 depGlobal += dep;
 
-                // 2. Nivel Línea de Arriendo (Cafeteras/Molinos en general, arrendados o no)
                 if (isLineaArriendo) {
                     totalMercadoLinea += val;
                     depLinea += dep;
                 }
 
-                // 3. Nivel Solo Arrendados y Cálculo de Ingreso Fijo
                 if (isArrendado) {
                     totalMercadoArrendados += val;
                     depArrendados += dep;
@@ -422,8 +421,6 @@
                 }
             });
 
-            // Set Valores al DOM
-            document.getElementById('kpi-valor').innerText = formatCurrency(totalMercadoGlobal);
             document.getElementById('kpi-revenue').innerText = formatCurrency(ingresoMensualArriendos);
 
             let ingresoAnualEst = ingresoMensualArriendos * 12;
@@ -434,7 +431,6 @@
                 return `${val}%`;
             };
 
-            // Cálculo final: (Ingresos Anuales - Depreciación Total de ese bloque) / Valor Mercado de ese bloque
             let roa1 = totalMercadoGlobal > 0 ? (((ingresoAnualEst - depGlobal) / totalMercadoGlobal) * 100).toFixed(1) : 0;
             let roa2 = totalMercadoLinea > 0 ? (((ingresoAnualEst - depLinea) / totalMercadoLinea) * 100).toFixed(1) : 0;
             let roa3 = totalMercadoArrendados > 0 ? (((ingresoAnualEst - depArrendados) / totalMercadoArrendados) * 100).toFixed(1) : 0;
@@ -446,6 +442,7 @@
             updateAllLocalCharts();
         }
 
+        // --- GRÁFICOS LOCALES ---
         function initLocalChartFilters() {
             const popSelect = (id, key) => {
                 const el = document.getElementById(id);
