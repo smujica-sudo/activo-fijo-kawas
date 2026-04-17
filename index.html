@@ -123,12 +123,12 @@
                     <div class="flex justify-between items-start"><p class="text-[10px] font-black text-indigo-800 uppercase">Activos Totales</p><i class="fa-solid fa-folder-tree text-indigo-400"></i></div>
                     <div class="mt-2"><div id="kpi-total" class="text-3xl font-black text-indigo-900 leading-tight">---</div><div id="kpi-val-total" class="text-sm font-black text-indigo-600 mt-1">---</div></div>
                 </div>
-                <div onclick="openTableFromKPI('Operación', {Estado: 'Uso Operacion'})" class="glass-card p-5 border-l-4 border-emerald-500 bg-emerald-50 flex flex-col justify-between">
-                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-emerald-800 uppercase">Operación</p><i class="fa-solid fa-circle-check text-emerald-500"></i></div>
+                <div onclick="openTableFromKPI('Uso Operación', {Estado: 'Uso Operacion'})" class="glass-card p-5 border-l-4 border-emerald-500 bg-emerald-50 flex flex-col justify-between">
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-emerald-800 uppercase">Uso Operación</p><i class="fa-solid fa-circle-check text-emerald-500"></i></div>
                     <div class="mt-2"><div id="kpi-op" class="text-3xl font-black text-emerald-900 leading-tight">---</div><div id="kpi-val-op" class="text-sm font-black text-emerald-600 mt-1">---</div></div>
                 </div>
-                <div onclick="openTableFromKPI('Mantención', {Estado: 'En Mantencion'})" class="glass-card p-5 border-l-4 border-amber-500 bg-amber-50 flex flex-col justify-between">
-                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-amber-800 uppercase">Mantención</p><i class="fa-solid fa-screwdriver-wrench text-amber-500"></i></div>
+                <div onclick="openTableFromKPI('En Mantención', {Estado: 'En Mantencion'})" class="glass-card p-5 border-l-4 border-amber-500 bg-amber-50 flex flex-col justify-between">
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-amber-800 uppercase">En Mantención</p><i class="fa-solid fa-screwdriver-wrench text-amber-500"></i></div>
                     <div class="mt-2"><div id="kpi-maint" class="text-3xl font-black text-amber-900 leading-tight">---</div><div id="kpi-val-maint" class="text-sm font-black text-amber-600 mt-1">---</div></div>
                 </div>
                 <div onclick="openTableFromKPI('En Riesgo', {Riesgo: true})" class="glass-card p-5 border-l-4 border-rose-500 bg-rose-50 flex flex-col justify-between">
@@ -303,7 +303,6 @@
         let masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "", 'Ubicacion Fisica': "" };
         let currentSort = { column: 'ID', asc: true };
 
-        // ACTUALIZADO: Opciones base para selectores
         const EDITABLE_FIELDS = [
             {id: 'Familia', label: 'Familia', type: 'text'}, {id: 'Categoria', label: 'Categoría', type: 'text'}, {id: 'Marca', label: 'Marca', type: 'text'},
             {id: 'Modelo', label: 'Modelo', type: 'text'}, {id: 'N Serie', label: 'Número de Serie', type: 'text'},
@@ -709,14 +708,14 @@
             else if (current.view === 'form') { renderNewForm(); }
         }
 
-        // --- FUNCIONES CRUD (DINÁMICAS) ---
+        // --- FUNCIONES CRUD ---
         function renderNewForm() {
             let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
             EDITABLE_FIELDS.forEach(f => {
                 html += `<div><label class="form-label">${f.label}</label>`;
                 if (f.type === 'select') {
                     html += `<select id="new-${f.id}" class="form-input"><option value="">-- Seleccionar --</option>`;
-                    // ACTUALIZADO: Opciones combinadas (base + base de datos real)
+                    
                     let dbOptions = rawData.map(i => i[f.id]).filter(Boolean);
                     let combinedOptions = [...new Set([...(f.baseOptions || []), ...dbOptions])].sort();
                     
@@ -777,7 +776,6 @@
                     if(f.type === 'select') {
                         html += `<select id="edit-${f.id}" class="form-input"><option value="">-- Seleccionar --</option>`;
                         
-                        // ACTUALIZADO: Opciones combinadas (base + base de datos real)
                         let dbOptions = rawData.map(i => i[f.id]).filter(Boolean);
                         let combinedOptions = [...new Set([...(f.baseOptions || []), ...dbOptions])].sort();
                         
