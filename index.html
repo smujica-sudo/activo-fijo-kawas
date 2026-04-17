@@ -23,7 +23,6 @@
         .breadcrumb-link { cursor: pointer; transition: color 0.2s; }
         .breadcrumb-link:hover { color: white; text-decoration: underline; }
 
-        /* NUEVO CSS PARA ENCABEZADOS FIJOS (STICKY) */
         .table-container { overflow-x: auto; overflow-y: auto; max-height: 65vh; background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .data-table { width: 100%; text-align: left; border-collapse: separate; border-spacing: 0; min-width: 1000px; }
         .data-table thead { position: sticky; top: 0; z-index: 20; }
@@ -96,10 +95,22 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass-card-static p-6"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Estado Operativo</h3><div class="h-56"><canvas id="chartEstado"></canvas></div></div>
-                <div class="glass-card-static p-6"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Sucursal Responsable</h3><div class="h-56"><canvas id="chartSucursal"></canvas></div></div>
-                <div class="glass-card-static p-6"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Top Bodegas / Ubicaciones</h3><div class="h-56"><canvas id="chartFisica"></canvas></div></div>
-                <div onclick="startNav('Todas las Familias', {})" class="glass-card p-6 border-2 border-transparent hover:border-indigo-500"><h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Inventario por Familia</h3><div class="h-56"><canvas id="chartCat"></canvas></div></div>
+                <div class="glass-card-static p-6 hover:border-indigo-500 transition-colors cursor-pointer" title="Toque una barra para explorar">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Estado Operativo</h3>
+                    <div class="h-56"><canvas id="chartEstado"></canvas></div>
+                </div>
+                <div class="glass-card-static p-6 hover:border-indigo-500 transition-colors cursor-pointer" title="Toque para explorar">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Sucursal Responsable</h3>
+                    <div class="h-56"><canvas id="chartSucursal"></canvas></div>
+                </div>
+                <div class="glass-card-static p-6 hover:border-indigo-500 transition-colors cursor-pointer" title="Toque para explorar">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Top Bodegas / Ubicaciones</h3>
+                    <div class="h-56"><canvas id="chartFisica"></canvas></div>
+                </div>
+                <div onclick="startNav('Todas las Familias', {})" class="glass-card p-6 border-2 border-transparent hover:border-indigo-500">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Inventario por Familia</h3>
+                    <div class="h-56"><canvas id="chartCat"></canvas></div>
+                </div>
             </div>
         </section>
 
@@ -164,7 +175,6 @@
     </main>
 
     <script>
-        // API CONFIGURATION DEFINITIVA
         const API_URL = 'https://script.google.com/macros/s/AKfycby36cA1fdHcHZBlq3ZXh65qXzgX_c1ujI-c296gMt3e_SfzPA3tC6Mqu55DAmFeJvwj/exec'; 
         
         let rawData = [];
@@ -172,7 +182,6 @@
         let currentFilteredData = [];
         let chartInstances = {};
         
-        // Variables de Control para el Buscador Maestro
         let masterSearchText = "";
         let masterHeaderFilters = { Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
         let currentSort = { column: 'ID', asc: true };
@@ -199,7 +208,7 @@
             }
         }
 
-        // --- SISTEMA CORE DE NAVEGACIÓN ---
+        // --- NAVEGACIÓN ---
         function popNav(index) {
             if (index === -1) {
                 navStack = []; 
@@ -251,8 +260,7 @@
             }
         }
 
-        // --- FLUJO DEL BUSCADOR MAESTRO ---
-
+        // --- BUSCADOR MAESTRO ---
         function openMasterSearch() {
             navStack = [{ title: 'Buscador Maestro', query: {}, view: 'search-families' }];
             masterSearchText = "";
@@ -303,15 +311,12 @@
         }
 
         function goToMasterTable(familia, title) {
-            // Sincroniza la barra de búsqueda de la tabla
             document.getElementById('master-live-search').value = masterSearchText;
             
-            // CORRECCIÓN: Si es búsqueda global (familia viene vacía), no aplicamos filtro de familia
             let queryObj = {};
             if (familia !== '') {
                 queryObj = { Familia: familia };
             }
-            
             pushNav(title, queryObj, 'search-table');
         }
 
@@ -331,11 +336,10 @@
             applyMasterTableFilters();
         }
 
-       function applyMasterTableFilters() {
+        function applyMasterTableFilters() {
             let result = currentFilteredData.filter(i => {
                 let matchText = true;
                 if (masterSearchText) {
-                    // CORRECCIÓN: Incluimos también la "Familia" en la cadena de texto para la búsqueda global
                     let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''}`.toLowerCase();
                     matchText = str.includes(masterSearchText);
                 }
@@ -358,6 +362,7 @@
 
             drawMasterTable(result);
         }
+
         function buildHeaderSelect(column) {
             let options = [...new Set(currentFilteredData.map(i => i[column] || '').filter(Boolean))].sort();
             let currentVal = masterHeaderFilters[column] || "";
@@ -394,7 +399,7 @@
                         <tr class="filter-row">
                             <th class="pl-4">${buildHeaderSelect('Categoria')}</th>
                             <th>${buildHeaderSelect('Marca')}</th>
-                            <th><div class="text-[9px] text-indigo-400 font-bold px-2 py-1 bg-indigo-50/50 rounded flex items-center justify-center"><i class="fa-solid fa-arrow-up mr-1"></i> Buscar Modelo</div></th>
+                            <th><div class="text-[9px] text-indigo-400 font-bold px-2 py-1 bg-indigo-50/50 rounded flex items-center justify-center"><i class="fa-solid fa-arrow-up mr-1"></i> Usar barra</div></th>
                             <th></th>
                             <th>${buildHeaderSelect('Estado')}</th>
                             <th>${buildHeaderSelect('Sucursal Responsable')}</th>
@@ -420,7 +425,7 @@
             container.innerHTML = html + `</tbody></table>`;
         }
 
-        // --- FLUJO DE INVENTARIO BÁSICO ---
+        // --- INVENTARIO BÁSICO ---
         function renderFamiliesGrid() {
             const families = [...new Set(currentFilteredData.map(i => i.Familia || 'Sin Familia'))];
             document.getElementById('title-families').innerText = navStack[navStack.length-1].title;
@@ -500,7 +505,7 @@
                 </div>`;
         }
 
-        // --- INICIALIZACIÓN DASHBOARD ---
+        // --- DASHBOARD CHARTS ---
         function updateDashboard() {
             document.getElementById('kpi-total').innerText = rawData.length;
             document.getElementById('kpi-op').innerText = rawData.filter(i => i.Estado.includes("Operacion")).length;
@@ -510,15 +515,43 @@
             if(chartInstances.estado) Object.values(chartInstances).forEach(c => c.destroy());
             const gc = (k) => rawData.reduce((acc, i) => { let v = i[k] || i[k.toUpperCase()]; if(v) acc[v] = (acc[v]||0)+1; return acc; }, {});
             
-            const common = { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}} };
-            chartInstances.estado = new Chart(document.getElementById('chartEstado'), { type:'doughnut', data:{ labels:Object.keys(gc('Estado')), datasets:[{data:Object.values(gc('Estado')), backgroundColor:['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6']}] }, options:common });
-            chartInstances.sucursal = new Chart(document.getElementById('chartSucursal'), { type:'doughnut', data:{ labels:Object.keys(gc('Sucursal Responsable')), datasets:[{data:Object.values(gc('Sucursal Responsable')), backgroundColor:['#6366f1','#10b981','#f59e0b']}] }, options:common });
+            // GRÁFICO ESTADO OPERATIVO (AHORA BARRAS HORIZONTALES)
+            const estLabels = Object.keys(gc('Estado'));
+            const estData = Object.values(gc('Estado'));
+            const colorMap = { 'Operacion': '#10b981', 'Mantencion': '#f59e0b', 'Perdido': '#ef4444', 'Vendido': '#ef4444' };
+            const getCol = (l) => { for(let k in colorMap) if(l.includes(k)) return colorMap[k]; return '#6366f1'; };
+
+            chartInstances.estado = new Chart(document.getElementById('chartEstado'), { 
+                type: 'bar', 
+                data: { labels: estLabels, datasets: [{ data: estData, backgroundColor: estLabels.map(getCol), borderRadius: 4 }] }, 
+                options: {
+                    indexAxis: 'y',
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    onClick: (e, el) => {
+                        if(el.length) {
+                            let selected = estLabels[el[0].index];
+                            masterSearchText = "";
+                            document.getElementById('master-live-search').value = "";
+                            masterHeaderFilters = { Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
+                            
+                            navStack = [
+                                { title: 'Buscador Maestro', query: {}, view: 'search-families' },
+                                { title: 'Estado: ' + selected, query: { Estado: selected }, view: 'search-table' }
+                            ];
+                            processNavState();
+                        }
+                    }
+                } 
+            });
+
+            chartInstances.sucursal = new Chart(document.getElementById('chartSucursal'), { type:'doughnut', data:{ labels:Object.keys(gc('Sucursal Responsable')), datasets:[{data:Object.values(gc('Sucursal Responsable')), backgroundColor:['#6366f1','#10b981','#f59e0b']}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}}} });
             
             let ubi = gc('Ubicacion Fisica'), topUbi = Object.entries(ubi).sort((a,b)=>b[1]-a[1]).slice(0,5);
-            chartInstances.fisica = new Chart(document.getElementById('chartFisica'), { type:'pie', data:{ labels:topUbi.map(u=>u[0]), datasets:[{data:topUbi.map(u=>u[1]), backgroundColor:['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9']}] }, options:common });
+            chartInstances.fisica = new Chart(document.getElementById('chartFisica'), { type:'pie', data:{ labels:topUbi.map(u=>u[0]), datasets:[{data:topUbi.map(u=>u[1]), backgroundColor:['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9']}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}}} });
             
             let fam = gc('Familia');
-            chartInstances.cat = new Chart(document.getElementById('chartCat'), { type:'bar', data:{ labels:Object.keys(fam).map(c=>c.substring(0,10)), datasets:[{data:Object.values(fam), backgroundColor:'#6366f1'}] }, options:{...common, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}}} });
+            chartInstances.cat = new Chart(document.getElementById('chartCat'), { type:'bar', data:{ labels:Object.keys(fam).map(c=>c.substring(0,10)), datasets:[{data:Object.values(fam), backgroundColor:'#6366f1'}] }, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}}} });
         }
 
         window.onload = init;
