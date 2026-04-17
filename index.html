@@ -254,4 +254,354 @@
             let breadHtml = `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="popNav(-1)">Home</span></span>`;
             navStack.forEach((step, idx) => {
                 breadHtml += `<span class="breadcrumb-item ${idx === navStack.length - 1 ? 'text-white' : ''}">
-                    <span class="${idx !== navStack.length - 1 ? '
+                    <span class="${idx !== navStack.length - 1 ? 'breadcrumb-link text-indigo-300' : ''}" onclick="popNav(${idx})">${step.title}</span>
+                </span>`;
+            });
+            document.getElementById('breadcrumb-path').innerHTML = breadHtml;
+
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + current.view).classList.add('active');
+            window.scrollTo(0,0);
+
+            if (current.view === 'families') { renderFamiliesGrid(current.isMasterSearch); }
+            else if (current.view === 'categories') { document.getElementById('title-categories').innerText = current.title; renderCategoriesGrid(); }
+            else if (current.view === 'search-table') { 
+                document.getElementById('title-master-table').innerText = current.title; 
+                renderSidebarFilters(); 
+                applyMasterTableFilters(); 
+            }
+            else if (current.view === 'detail') { renderDetail(); }
+            else if (current.view === 'search-families') { renderSearchFamilies(); }
+        }
+
+        // --- BUSCADOR MAESTRO ---
+        function resetMasterFiltersVariables() {
+            masterSearchText = "";
+            document.getElementById('master-live-search').value = "";
+            masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
+        }
+
+        function resetMasterFilters() {
+            resetMasterFiltersVariables();
+            renderSidebarFilters();
+            applyMasterTableFilters();
+        }
+
+        function openMasterSearch() {
+            resetMasterFiltersVariables();
+            document.getElementById('pre-live-search').value = "";
+            navStack = [{ title: 'Buscador Maestro', query: {}, view: 'search-families', isMasterSearch: true }];
+            processNavState();
+        }
+
+        function handlePreLiveSearch(val) {
+            masterSearchText = val.toLowerCase();
+            if (document.getElementById('view-search-families').classList.contains('active')) {
+                renderSearchFamilies();
+            } else {
+                renderFamiliesGrid(false);
+            }
+        }
+
+        function renderSearchFamilies() {
+            const families = [...new Set(rawData.map(i => i.Familia || 'Sin Familia'))].sort();
+            
+            let totalMatch = rawData.filter(i => {
+                if(!masterSearchText) return true;
+                let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''}`.toLowerCase();
+                return str.includes(masterSearchText);
+            }).length;
+
+            let html = `
+                <div onclick="goToMasterTable('', 'Búsqueda Global')" class="glass-card p-6 flex justify-between items-center bg-indigo-600 text-white hover:bg-indigo-700 shadow-md">
+                    <div><h4 class="font-bold text-lg">Toda la Base de Datos</h4><p class="text-[10px] text-indigo-200 uppercase font-bold">${totalMatch} Resultados</p></div>
+                    <i class="fa-solid fa-globe text-indigo-300 text-2xl"></i>
+                </div>
+            `;
+            
+            families.forEach(f => {
+                let count = rawData.filter(i => {
+                    if ((i.Familia || 'Sin Familia') !== f) return false;
+                    if(!masterSearchText) return true;
+                    let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''}`.toLowerCase();
+                    return str.includes(masterSearchText);
+                }).length;
+
+                if (masterSearchText && count === 0) return;
+
+                html += `
+                <div onclick="goToMasterTable('${f}', 'Familia: ${f}')" class="glass-card p-6 flex justify-between items-center group border-l-4 border-indigo-400">
+                    <div><h4 class="font-bold text-slate-700">${f}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${count} Activos</p></div>
+                    <i class="fa-solid fa-folder-open text-slate-200 group-hover:text-indigo-600"></i>
+                </div>`;
+            });
+            document.getElementById('grid-search-families').innerHTML = html;
+        }
+
+        function goToMasterTable(familia, title) {
+            document.getElementById('master-live-search').value = masterSearchText;
+            let queryObj = {};
+            if (familia !== '') queryObj = { Familia: familia };
+            pushNav(title, queryObj, 'search-table');
+        }
+
+        function renderFamiliesGrid(isMasterSearch) {
+            const current = navStack[navStack.length - 1];
+            document.getElementById('title-families').innerText = current.title;
+            const families = [...new Set(rawData.map(i => i.Familia || 'Sin Familia'))].sort();
+            let html = "";
+
+            families.forEach(f => {
+                let count = currentFilteredData.filter(i => (i.Familia || 'Sin Familia') === f).length;
+                html += `
+                <div onclick="pushNav('${f}', {Familia: '${f}'}, 'categories')" class="glass-card p-6 flex justify-between items-center group">
+                    <div><h4 class="font-bold text-slate-700">${f}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${count} Activos</p></div>
+                    <i class="fa-solid fa-layer-group text-slate-200 group-hover:text-indigo-600 text-xl"></i>
+                </div>`;
+            });
+            document.getElementById('grid-families').innerHTML = html;
+        }
+
+        function renderCategoriesGrid() {
+            const cats = [...new Set(currentFilteredData.map(i => i.Categoria))].sort();
+            document.getElementById('grid-categories').innerHTML = cats.map(c => `
+                <div onclick="openTableFromCategory('${c}')" class="glass-card p-6 flex justify-between items-center group border-l-4 border-indigo-400">
+                    <div><h4 class="font-bold text-slate-700">${c}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${currentFilteredData.filter(i=>i.Categoria===c).length} Items</p></div>
+                    <i class="fa-solid fa-table text-slate-200 group-hover:text-indigo-600 text-xl"></i>
+                </div>`).join('');
+        }
+
+        function openTableFromCategory(cat) {
+            resetMasterFiltersVariables();
+            pushNav('Categoría: ' + cat, {Categoria: cat}, 'search-table');
+        }
+
+        // --- TABLA Y SIDEBAR ---
+        function renderSidebarFilters() {
+            const columns = [
+                { id: 'Familia', label: 'Familia' },
+                { id: 'Categoria', label: 'Categoría' },
+                { id: 'Marca', label: 'Fabricante / Marca' },
+                { id: 'Estado', label: 'Estado Operativo' },
+                { id: 'Sucursal Responsable', label: 'Sucursal' }
+            ];
+
+            columns.forEach(col => {
+                let options = [...new Set(currentFilteredData.map(i => i[col.id] || 'Sin Asignar').filter(Boolean))].sort();
+                let currentVal = masterHeaderFilters[col.id] || "";
+                
+                let html = `<label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">${col.label}</label>`;
+                html += `<select class="w-full p-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-indigo-500 bg-slate-50 font-semibold text-slate-700 cursor-pointer transition-colors hover:bg-white" onchange="updateHeaderFilter('${col.id}', this.value)">`;
+                html += `<option value="">-- Todos --</option>`;
+                options.forEach(o => {
+                    let valToSet = o === 'Sin Asignar' ? '' : o;
+                    let sel = (valToSet === currentVal) ? 'selected' : '';
+                    html += `<option value="${valToSet}" ${sel}>${o}</option>`;
+                });
+                html += `</select>`;
+                
+                document.getElementById(`filter-container-${col.id}`).innerHTML = html;
+            });
+        }
+
+        function handleLiveSearch(val) {
+            masterSearchText = val.toLowerCase();
+            applyMasterTableFilters();
+        }
+
+        function updateHeaderFilter(column, value) {
+            masterHeaderFilters[column] = value;
+            applyMasterTableFilters();
+        }
+
+        function sortMasterTable(col) {
+            currentSort.asc = (currentSort.column === col) ? !currentSort.asc : true;
+            currentSort.column = col;
+            applyMasterTableFilters();
+        }
+
+        function applyMasterTableFilters() {
+            let result = currentFilteredData.filter(i => {
+                let matchText = true;
+                if (masterSearchText) {
+                    let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''}`.toLowerCase();
+                    matchText = str.includes(masterSearchText);
+                }
+                
+                let mFam = !masterHeaderFilters.Familia || i.Familia === masterHeaderFilters.Familia;
+                let mCat = !masterHeaderFilters.Categoria || i.Categoria === masterHeaderFilters.Categoria;
+                let mMar = !masterHeaderFilters.Marca || i.Marca === masterHeaderFilters.Marca;
+                let mEst = !masterHeaderFilters.Estado || i.Estado === masterHeaderFilters.Estado;
+                let mSuc = !masterHeaderFilters['Sucursal Responsable'] || i['Sucursal Responsable'] === masterHeaderFilters['Sucursal Responsable'];
+                
+                return matchText && mFam && mCat && mMar && mEst && mSuc;
+            });
+
+            result.sort((a, b) => {
+                let vA = (a[currentSort.column] || '').toString().toLowerCase();
+                let vB = (b[currentSort.column] || '').toString().toLowerCase();
+                if (vA < vB) return currentSort.asc ? -1 : 1;
+                if (vA > vB) return currentSort.asc ? 1 : -1;
+                return 0;
+            });
+
+            drawMasterTable(result);
+        }
+
+        function getSortIcon(col) {
+            if (currentSort.column !== col) return '<i class="fa-solid fa-sort opacity-30 ml-1"></i>';
+            return currentSort.asc ? '<i class="fa-solid fa-sort-up text-indigo-600 ml-1"></i>' : '<i class="fa-solid fa-sort-down text-indigo-600 ml-1"></i>';
+        }
+
+        function drawMasterTable(list) {
+            const container = document.getElementById('table-master-container');
+            
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable pl-4" onclick="sortMasterTable('Familia')">Familia ${getSortIcon('Familia')}</th>
+                            <th class="sortable" onclick="sortMasterTable('Categoria')">Categoría ${getSortIcon('Categoria')}</th>
+                            <th class="sortable" onclick="sortMasterTable('Marca')">Marca ${getSortIcon('Marca')}</th>
+                            <th class="sortable" onclick="sortMasterTable('Modelo')">Modelo ${getSortIcon('Modelo')}</th>
+                            <th class="sortable" onclick="sortMasterTable('N Serie')">Serie ${getSortIcon('N Serie')}</th>
+                            <th class="sortable" onclick="sortMasterTable('Estado')">Estado ${getSortIcon('Estado')}</th>
+                            <th class="sortable" onclick="sortMasterTable('Sucursal Responsable')">Sucursal ${getSortIcon('Sucursal Responsable')}</th>
+                            <th class="text-center pr-4">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+            `;
+
+            if (list.length === 0) {
+                html += `<tr><td colspan="8" class="p-12 text-center text-slate-400 font-bold"><i class="fa-solid fa-ghost text-3xl mb-3 opacity-30"></i><br>No se encontraron resultados con estos filtros.</td></tr>`;
+            } else {
+                html += list.map(i => `<tr>
+                    <td class="text-xs text-slate-400 font-bold pl-4">${i.Familia || '---'}</td>
+                    <td class="text-xs text-slate-500 font-bold">${i.Categoria || '---'}</td>
+                    <td class="font-semibold text-slate-700">${i.Marca || 'Genérico'}</td>
+                    <td class="font-bold text-slate-900">${i.Modelo || i['MODELO/Nombre']}</td>
+                    <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || i['N° SERIE']}</td>
+                    <td><span class="text-[9px] font-bold px-2 py-1 rounded-full ${i.Estado.includes('Operacion') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span></td>
+                    <td class="text-xs font-semibold text-slate-600">${i['Sucursal Responsable'] || '---'}</td>
+                    <td class="text-center pr-4"><button onclick="pushNav('Detalle de Material', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white px-4 py-1 rounded border border-indigo-200 text-xs font-bold transition-all shadow-sm">Ver Ficha</button></td>
+                </tr>`).join('');
+            }
+            container.innerHTML = html + `</tbody></table>`;
+        }
+
+        // --- FICHA TÉCNICA ---
+        function renderDetail() {
+            const i = currentFilteredData[0];
+            document.getElementById('item-ficha').innerHTML = `
+                <div class="glass-card-static overflow-hidden shadow-2xl">
+                    <div class="bg-indigo-600 p-8 text-white text-center relative">
+                        <i class="fa-solid fa-boxes-stacked absolute top-4 right-4 opacity-10 text-6xl"></i>
+                        <h2 class="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-2">Detalle de Material</h2>
+                        <h3 class="text-2xl font-black">${i.Modelo || i['MODELO/Nombre'] || '---'}</h3>
+                        <p class="text-[11px] uppercase opacity-90 mt-2">${i.Familia || 'Sin Familia'} / ${i.Categoria}</p>
+                    </div>
+                    <div class="p-6 md:p-8 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Número de Serie</p><p class="font-mono font-bold text-base text-indigo-600">${i['N Serie'] || i['N° SERIE'] || '---'}</p></div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Estado Operativo</p><p class="font-bold text-sm text-slate-800">${i.Estado}</p></div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Condición Técnica</p><p class="font-bold text-sm text-slate-800">${i.Condicion || i.CONDICION || '---'}</p></div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100"><p class="text-indigo-400 font-bold uppercase text-[9px] mb-1">Sucursal Responsable</p><p class="font-bold text-sm text-indigo-900">${i['Sucursal Responsable'] || i['SUCURSAL RESPONSABLE'] || '---'}</p></div>
+                            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100"><p class="text-indigo-400 font-bold uppercase text-[9px] mb-1">Ubicación Física</p><p class="font-bold text-sm text-indigo-900">${i['Ubicacion Fisica'] || i['UBICACION FISICA'] || '---'}</p></div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[10px]">
+                            <div class="p-2 border-b"><p class="text-slate-400 font-bold uppercase">Proveedor</p><p class="font-bold">${i.Proveedor || i.PROVEEDOR || '---'}</p></div>
+                            <div class="p-2 border-b"><p class="text-slate-400 font-bold uppercase">Factura/Guía</p><p class="font-bold">${i['N° GUIA / FAC'] || i['Nro Factura'] || '---'}</p></div>
+                            <div class="p-2 border-b"><p class="text-slate-400 font-bold uppercase">Valor Neto</p><p class="font-bold text-emerald-600">${i['Valor Compra Neto'] || '---'}</p></div>
+                            <div class="p-2 border-b"><p class="text-slate-400 font-bold uppercase">Adquisición</p><p class="font-bold">${i['Fecha Adquisicion'] || i['Fecha Revision'] || '---'}</p></div>
+                        </div>
+                        <div class="bg-amber-50 p-5 rounded-xl border-l-4 border-amber-400"><p class="font-bold text-amber-700 uppercase text-[10px] mb-1">Observaciones</p><p class="text-sm text-slate-700 italic">"${i.Observaciones || i.OBS || 'Sin observaciones registradas.'}"</p></div>
+                        <button onclick="popNav(navStack.length - 2)" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-arrow-left mr-2"></i> Volver atrás</button>
+                    </div>
+                </div>`;
+        }
+
+        // --- DASHBOARD CHARTS ---
+        function updateDashboard() {
+            document.getElementById('kpi-total').innerText = rawData.length;
+            document.getElementById('kpi-op').innerText = rawData.filter(i => i.Estado.includes("Operacion")).length;
+            document.getElementById('kpi-maint').innerText = rawData.filter(i => i.Estado.includes("Mantencion")).length;
+            document.getElementById('kpi-risk').innerText = rawData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado)).length;
+            
+            if(chartInstances.estado) Object.values(chartInstances).forEach(c => c.destroy());
+            const gc = (k) => rawData.reduce((acc, i) => { let v = i[k] || i[k.toUpperCase()]; if(v) acc[v] = (acc[v]||0)+1; return acc; }, {});
+            
+            // EJE Y AJUSTADO EN ESTADO OPERATIVO
+            const estLabels = Object.keys(gc('Estado'));
+            const estData = Object.values(gc('Estado'));
+            const colorMap = { 'Operacion': '#10b981', 'Mantencion': '#f59e0b', 'Perdido': '#ef4444', 'Vendido': '#ef4444' };
+            const getCol = (l) => { for(let k in colorMap) if(l.includes(k)) return colorMap[k]; return '#6366f1'; };
+
+            chartInstances.estado = new Chart(document.getElementById('chartEstado'), { 
+                type: 'bar', 
+                data: { labels: estLabels, datasets: [{ data: estData, backgroundColor: estLabels.map(getCol), borderRadius: 4 }] }, 
+                options: {
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            ticks: { 
+                                autoSkip: false, // FUERZA A MOSTRAR TODOS LOS TEXTOS
+                                font: { size: 10, family: "'Inter', sans-serif" } // TAMAÑO DE FUENTE LEGIBLE
+                            },
+                            grid: { display: false } // LIMPIA LAS LÍNEAS DEL EJE Y
+                        },
+                        x: {
+                            ticks: { font: { size: 10 } }
+                        }
+                    },
+                    onClick: (e, el) => { 
+                        if(el.length) openTableFromKPI('Estado: ' + estLabels[el[0].index], { Estado: estLabels[el[0].index] }); 
+                        else openTableFromKPI('Todos los Estados', {}); 
+                    }
+                } 
+            });
+
+            const sucLabels = Object.keys(gc('Sucursal Responsable'));
+            chartInstances.sucursal = new Chart(document.getElementById('chartSucursal'), { 
+                type:'doughnut', 
+                data:{ labels:sucLabels, datasets:[{data:Object.values(gc('Sucursal Responsable')), backgroundColor:['#6366f1','#10b981','#f59e0b']}] }, 
+                options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}},
+                onClick: (e, el) => { 
+                    if(el.length) openTableFromKPI('Sede: ' + sucLabels[el[0].index], { 'Sucursal Responsable': sucLabels[el[0].index] }); 
+                    else openTableFromKPI('Todas las Sedes', {});
+                }} 
+            });
+            
+            let ubi = gc('Ubicacion Fisica'), topUbi = Object.entries(ubi).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            chartInstances.fisica = new Chart(document.getElementById('chartFisica'), { 
+                type:'pie', 
+                data:{ labels:topUbi.map(u=>u[0]), datasets:[{data:topUbi.map(u=>u[1]), backgroundColor:['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9']}] }, 
+                options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}},
+                onClick: (e, el) => { 
+                    if(el.length) openTableFromKPI('Bodega: ' + topUbi[el[0].index][0], { 'Ubicacion Fisica': topUbi[el[0].index][0] }); 
+                    else openTableFromKPI('Todas las Bodegas', {});
+                }} 
+            });
+            
+            let fam = gc('Familia');
+            let famLabels = Object.keys(fam);
+            chartInstances.cat = new Chart(document.getElementById('chartCat'), { 
+                type:'bar', 
+                data:{ labels:famLabels.map(c=>c.substring(0,10)), datasets:[{data:Object.values(fam), backgroundColor:'#6366f1', borderRadius: 4}] }, 
+                options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}},
+                onClick: (e, el) => { 
+                    if(el.length) openTableFromKPI('Familia: ' + famLabels[el[0].index], { Familia: famLabels[el[0].index] });
+                    else openTableFromKPI('Todas las Familias', {});
+                }} 
+            });
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
