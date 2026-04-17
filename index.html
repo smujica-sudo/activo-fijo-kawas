@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIAF 2026 - Buscador Inteligente</title>
+    <title>SIAF 2026 - Buscador Maestro Predictivo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -23,9 +23,12 @@
         .breadcrumb-link { cursor: pointer; transition: color 0.2s; }
         .breadcrumb-link:hover { color: white; text-decoration: underline; }
 
-        .table-container { overflow-x: auto; background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .data-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 1000px; }
-        .data-table th.sortable { background-color: #f8fafc; padding: 1rem 0.5rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 800; cursor: pointer; user-select: none; transition: background 0.2s; }
+        /* NUEVO CSS PARA ENCABEZADOS FIJOS (STICKY) */
+        .table-container { overflow-x: auto; overflow-y: auto; max-height: 65vh; background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .data-table { width: 100%; text-align: left; border-collapse: separate; border-spacing: 0; min-width: 1000px; }
+        .data-table thead { position: sticky; top: 0; z-index: 20; }
+        
+        .data-table th.sortable { background-color: #f8fafc; padding: 1rem 0.5rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 800; cursor: pointer; user-select: none; transition: background 0.2s; border-bottom: 1px solid #e2e8f0; }
         .data-table th.sortable:hover { background-color: #f1f5f9; color: #4f46e5; }
         .data-table th.filter-row { background-color: #eef2ff; padding: 0.5rem; border-bottom: 2px solid #c7d2fe; }
         .data-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
@@ -112,4 +115,405 @@
             <div id="grid-search-families" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </section>
 
-        <section
+        <section id="view-search-table" class="view-section">
+            <div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h2 id="title-master-table" class="text-2xl font-black text-slate-800 uppercase mb-1 text-indigo-700"></h2>
+                    <p class="text-xs font-bold text-slate-400">Puede seguir filtrando utilizando la barra o los menús de las cabeceras.</p>
+                </div>
+                
+                <div class="relative w-full md:max-w-md">
+                    <i class="fa-solid fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+                    <input type="text" id="master-live-search" onkeyup="handleLiveSearch(this.value)" placeholder="Filtrar en esta tabla..." class="filter-input pl-12 font-semibold text-slate-700 bg-white">
+                </div>
+            </div>
+            
+            <div id="table-master-container" class="table-container shadow-lg border-t-4 border-indigo-500"></div>
+        </section>
+
+        <section id="view-families" class="view-section">
+            <h2 id="title-families" class="text-2xl font-black text-slate-800 uppercase mb-6"></h2>
+            <div id="grid-families" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="view-categories" class="view-section">
+            <h2 id="title-categories" class="text-2xl font-black text-slate-800 uppercase mb-6"></h2>
+            <div id="grid-categories" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="view-subcategories" class="view-section">
+            <h2 id="title-subcategories" class="text-2xl font-black text-slate-800 uppercase mb-6"></h2>
+            <div id="grid-subcategories" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="view-materials" class="view-section">
+            <div class="mb-6 space-y-4">
+                <h2 id="title-materials" class="text-2xl font-black text-slate-800 uppercase mb-1"></h2>
+                <div class="relative max-w-md">
+                    <i class="fa-solid fa-filter absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="search-materials" onkeyup="searchMaterials(this.value)" placeholder="Filtrar en esta lista específica..." class="filter-input pl-10 py-2">
+                </div>
+            </div>
+            <div id="table-materials-container" class="table-container"></div>
+        </section>
+
+        <section id="view-detail" class="view-section">
+            <div id="item-ficha" class="max-w-4xl mx-auto"></div>
+        </section>
+
+    </main>
+
+    <script>
+        // API CONFIGURATION DEFINITIVA
+        const API_URL = 'https://script.google.com/macros/s/AKfycby36cA1fdHcHZBlq3ZXh65qXzgX_c1ujI-c296gMt3e_SfzPA3tC6Mqu55DAmFeJvwj/exec'; 
+        
+        let rawData = [];
+        let navStack = []; 
+        let currentFilteredData = [];
+        let chartInstances = {};
+        
+        // Variables de Control para el Buscador Maestro
+        let masterSearchText = "";
+        let masterHeaderFilters = { Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
+        let currentSort = { column: 'ID', asc: true };
+
+        async function init() {
+            await forceSync(false); 
+        }
+
+        async function forceSync(manual = true) {
+            const syncIcon = document.getElementById('sync-icon');
+            if (manual) syncIcon.classList.add('fa-spin'); 
+
+            try {
+                const res = await fetch(API_URL);
+                rawData = await res.json();
+                document.getElementById('items-count').innerText = rawData.length;
+                updateDashboard();
+                if (navStack.length > 0) processNavState(); 
+            } catch (e) { 
+                console.error("Error API:", e);
+                if (manual) alert("Error al sincronizar con la base de datos.");
+            } finally {
+                if (manual) syncIcon.classList.remove('fa-spin');
+            }
+        }
+
+        // --- SISTEMA CORE DE NAVEGACIÓN ---
+        function popNav(index) {
+            if (index === -1) {
+                navStack = []; 
+                document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+                document.getElementById('view-dashboard').classList.add('active');
+                document.getElementById('breadcrumb-path').innerHTML = `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="popNav(-1)">Home</span></span>`;
+                window.scrollTo(0,0);
+                return;
+            }
+            navStack = navStack.slice(0, index + 1);
+            processNavState();
+        }
+
+        function startNav(title, query) { navStack = [{ title, query, view: 'families' }]; processNavState(); }
+        function pushNav(title, query, view) { navStack.push({ title, query: { ...navStack[navStack.length-1].query, ...query }, view }); processNavState(); }
+
+        function processNavState() {
+            if (navStack.length === 0) return;
+            let current = navStack[navStack.length - 1];
+            
+            currentFilteredData = rawData.filter(item => {
+                for (let key in current.query) {
+                    if (key === 'Riesgo') { if (!["Perdido", "Vendido", "Pendiente"].includes(item.Estado)) return false; } 
+                    else if (item[key] !== current.query[key]) return false;
+                } return true;
+            });
+
+            let breadHtml = `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="popNav(-1)">Home</span></span>`;
+            navStack.forEach((step, idx) => {
+                breadHtml += `<span class="breadcrumb-item ${idx === navStack.length - 1 ? 'text-white' : ''}">
+                    <span class="${idx !== navStack.length - 1 ? 'breadcrumb-link text-indigo-300' : ''}" onclick="popNav(${idx})">${step.title}</span>
+                </span>`;
+            });
+            document.getElementById('breadcrumb-path').innerHTML = breadHtml;
+
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + current.view).classList.add('active');
+            window.scrollTo(0,0);
+
+            if (current.view === 'families') { renderFamiliesGrid(); }
+            else if (current.view === 'categories') { document.getElementById('title-categories').innerText = current.title; renderCategoriesGrid(); }
+            else if (current.view === 'subcategories') { document.getElementById('title-subcategories').innerText = current.title; renderSubcategoriesGrid(); }
+            else if (current.view === 'materials') { document.getElementById('title-materials').innerText = current.title; document.getElementById('search-materials').value = ''; renderMaterialsTable(currentFilteredData); }
+            else if (current.view === 'detail') { renderDetail(); }
+            else if (current.view === 'search-families') { renderSearchFamilies(); }
+            else if (current.view === 'search-table') { 
+                document.getElementById('title-master-table').innerText = current.title;
+                applyMasterTableFilters(); 
+            }
+        }
+
+        // --- FLUJO DEL BUSCADOR MAESTRO ---
+
+        function openMasterSearch() {
+            navStack = [{ title: 'Buscador Maestro', query: {}, view: 'search-families' }];
+            masterSearchText = "";
+            document.getElementById('pre-live-search').value = "";
+            document.getElementById('master-live-search').value = "";
+            masterHeaderFilters = { Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
+            processNavState();
+        }
+
+        function handlePreLiveSearch(val) {
+            masterSearchText = val.toLowerCase();
+            renderSearchFamilies();
+        }
+
+        function renderSearchFamilies() {
+            const families = [...new Set(rawData.map(i => i.Familia || 'Sin Familia'))].sort();
+            
+            let totalMatch = rawData.filter(i => {
+                if(!masterSearchText) return true;
+                let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''}`.toLowerCase();
+                return str.includes(masterSearchText);
+            }).length;
+
+            let html = `
+                <div onclick="goToMasterTable('', 'Búsqueda Global')" class="glass-card p-6 flex justify-between items-center bg-indigo-600 text-white hover:bg-indigo-700 shadow-md">
+                    <div><h4 class="font-bold text-lg">Toda la Base de Datos</h4><p class="text-[10px] text-indigo-200 uppercase font-bold">${totalMatch} Resultados</p></div>
+                    <i class="fa-solid fa-globe text-indigo-300 text-2xl"></i>
+                </div>
+            `;
+            
+            families.forEach(f => {
+                let count = rawData.filter(i => {
+                    if ((i.Familia || 'Sin Familia') !== f) return false;
+                    if(!masterSearchText) return true;
+                    let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''}`.toLowerCase();
+                    return str.includes(masterSearchText);
+                }).length;
+
+                if (masterSearchText && count === 0) return;
+
+                html += `
+                <div onclick="goToMasterTable('${f}', 'Familia: ${f}')" class="glass-card p-6 flex justify-between items-center group border-l-4 border-indigo-400">
+                    <div><h4 class="font-bold text-slate-700">${f}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${count} Activos</p></div>
+                    <i class="fa-solid fa-folder-open text-slate-200 group-hover:text-indigo-600"></i>
+                </div>`;
+            });
+            document.getElementById('grid-search-families').innerHTML = html;
+        }
+
+        function goToMasterTable(familia, title) {
+            document.getElementById('master-live-search').value = masterSearchText;
+            pushNav(title, { Familia: familia }, 'search-table');
+        }
+
+        function handleLiveSearch(val) {
+            masterSearchText = val.toLowerCase();
+            applyMasterTableFilters();
+        }
+
+        function updateHeaderFilter(column, value) {
+            masterHeaderFilters[column] = value;
+            applyMasterTableFilters();
+        }
+
+        function sortMasterTable(col) {
+            currentSort.asc = (currentSort.column === col) ? !currentSort.asc : true;
+            currentSort.column = col;
+            applyMasterTableFilters();
+        }
+
+        function applyMasterTableFilters() {
+            let result = currentFilteredData.filter(i => {
+                let matchText = true;
+                if (masterSearchText) {
+                    let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''}`.toLowerCase();
+                    matchText = str.includes(masterSearchText);
+                }
+                
+                let mCat = !masterHeaderFilters.Categoria || i.Categoria === masterHeaderFilters.Categoria;
+                let mMar = !masterHeaderFilters.Marca || i.Marca === masterHeaderFilters.Marca;
+                let mEst = !masterHeaderFilters.Estado || i.Estado === masterHeaderFilters.Estado;
+                let mSuc = !masterHeaderFilters['Sucursal Responsable'] || i['Sucursal Responsable'] === masterHeaderFilters['Sucursal Responsable'];
+                
+                return matchText && mCat && mMar && mEst && mSuc;
+            });
+
+            result.sort((a, b) => {
+                let vA = (a[currentSort.column] || '').toString().toLowerCase();
+                let vB = (b[currentSort.column] || '').toString().toLowerCase();
+                if (vA < vB) return currentSort.asc ? -1 : 1;
+                if (vA > vB) return currentSort.asc ? 1 : -1;
+                return 0;
+            });
+
+            drawMasterTable(result);
+        }
+
+        function buildHeaderSelect(column) {
+            let options = [...new Set(currentFilteredData.map(i => i[column] || '').filter(Boolean))].sort();
+            let currentVal = masterHeaderFilters[column] || "";
+            let html = `<select class="header-select" onchange="updateHeaderFilter('${column}', this.value)">`;
+            html += `<option value="">Todas</option>`;
+            options.forEach(o => {
+                let sel = (o === currentVal) ? 'selected' : '';
+                html += `<option value="${o}" ${sel}>${o}</option>`;
+            });
+            html += `</select>`;
+            return html;
+        }
+
+        function getSortIcon(col) {
+            if (currentSort.column !== col) return '<i class="fa-solid fa-sort opacity-30 ml-1"></i>';
+            return currentSort.asc ? '<i class="fa-solid fa-sort-up text-indigo-600 ml-1"></i>' : '<i class="fa-solid fa-sort-down text-indigo-600 ml-1"></i>';
+        }
+
+        function drawMasterTable(list) {
+            const container = document.getElementById('table-master-container');
+            
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable pl-4" onclick="sortMasterTable('Categoria')">Categoría ${getSortIcon('Categoria')}</th>
+                            <th class="sortable" onclick="sortMasterTable('Marca')">Marca ${getSortIcon('Marca')}</th>
+                            <th class="sortable" onclick="sortMasterTable('Modelo')">Modelo ${getSortIcon('Modelo')}</th>
+                            <th class="sortable" onclick="sortMasterTable('N Serie')">Serie ${getSortIcon('N Serie')}</th>
+                            <th class="sortable" onclick="sortMasterTable('Estado')">Estado ${getSortIcon('Estado')}</th>
+                            <th class="sortable" onclick="sortMasterTable('Sucursal Responsable')">Sucursal ${getSortIcon('Sucursal Responsable')}</th>
+                            <th class="text-center pr-4">Acción</th>
+                        </tr>
+                        <tr class="filter-row">
+                            <th class="pl-4">${buildHeaderSelect('Categoria')}</th>
+                            <th>${buildHeaderSelect('Marca')}</th>
+                            <th><div class="text-[9px] text-indigo-400 font-bold px-2 py-1 bg-indigo-50/50 rounded flex items-center justify-center"><i class="fa-solid fa-arrow-up mr-1"></i> Buscar Modelo</div></th>
+                            <th></th>
+                            <th>${buildHeaderSelect('Estado')}</th>
+                            <th>${buildHeaderSelect('Sucursal Responsable')}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+            `;
+
+            if (list.length === 0) {
+                html += `<tr><td colspan="7" class="p-8 text-center text-slate-500 font-bold"><i class="fa-solid fa-ghost text-2xl mb-2 opacity-50"></i><br>No se encontraron resultados en esta Familia.</td></tr>`;
+            } else {
+                html += list.map(i => `<tr>
+                    <td class="text-xs text-slate-500 font-bold pl-4">${i.Categoria || '---'}</td>
+                    <td class="font-semibold text-slate-700">${i.Marca || 'Genérico'}</td>
+                    <td class="font-bold text-slate-900">${i.Modelo || i['MODELO/Nombre']}</td>
+                    <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || i['N° SERIE']}</td>
+                    <td><span class="text-[9px] font-bold px-2 py-1 rounded-full ${i.Estado.includes('Operacion') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span></td>
+                    <td class="text-xs font-semibold text-slate-600">${i['Sucursal Responsable'] || '---'}</td>
+                    <td class="text-center pr-4"><button onclick="pushNav('Detalle de Material', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 bg-white hover:bg-indigo-600 hover:text-white px-3 py-1 rounded border border-indigo-200 text-xs font-bold transition-all shadow-sm">Ficha</button></td>
+                </tr>`).join('');
+            }
+            container.innerHTML = html + `</tbody></table>`;
+        }
+
+        // --- FLUJO DE INVENTARIO BÁSICO ---
+        function renderFamiliesGrid() {
+            const families = [...new Set(currentFilteredData.map(i => i.Familia || 'Sin Familia'))];
+            document.getElementById('title-families').innerText = navStack[navStack.length-1].title;
+            document.getElementById('grid-families').innerHTML = families.map(f => `
+                <div onclick="pushNav('${f}', {Familia: '${f}'}, 'categories')" class="glass-card p-6 flex justify-between items-center group">
+                    <div><h4 class="font-bold text-slate-700">${f}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${currentFilteredData.filter(i=>i.Familia===f).length} Items</p></div>
+                    <i class="fa-solid fa-layer-group text-slate-200 group-hover:text-indigo-600"></i>
+                </div>`).join('');
+        }
+
+        function renderCategoriesGrid() {
+            const cats = [...new Set(currentFilteredData.map(i => i.Categoria))];
+            document.getElementById('grid-categories').innerHTML = cats.map(c => `
+                <div onclick="pushNav('${c}', {Categoria: '${c}'}, 'subcategories')" class="glass-card p-6 flex justify-between items-center group">
+                    <div><h4 class="font-bold text-slate-700">${c}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${currentFilteredData.filter(i=>i.Categoria===c).length} Items</p></div>
+                    <i class="fa-solid fa-folder-open text-slate-200 group-hover:text-indigo-600"></i>
+                </div>`).join('');
+        }
+
+        function renderSubcategoriesGrid() {
+            const marcas = [...new Set(currentFilteredData.map(i => i.Marca || 'Genérico'))];
+            document.getElementById('grid-subcategories').innerHTML = marcas.map(m => `
+                <div onclick="pushNav('${m}', {Marca: '${m === 'Genérico' ? '' : m}'}, 'materials')" class="glass-card p-6 flex justify-between items-center group">
+                    <div><span class="text-[9px] font-black px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 mb-2 inline-block">MARCA</span><h4 class="font-bold text-slate-800">${m}</h4></div>
+                    <i class="fa-solid fa-tag text-slate-200 group-hover:text-indigo-600"></i>
+                </div>`).join('');
+        }
+
+        function renderMaterialsTable(list) {
+            const container = document.getElementById('table-materials-container');
+            if (list.length === 0) { container.innerHTML = '<div class="p-6 text-center text-slate-500">No hay items.</div>'; return; }
+            let html = `<table class="data-table"><thead><tr><th class="pl-4">Marca</th><th>Modelo</th><th>Serie</th><th>Estado</th><th class="text-center pr-4">Acción</th></tr></thead><tbody>`;
+            html += list.map(i => `<tr>
+                <td class="font-semibold text-slate-600 pl-4">${i.Marca || 'Genérico'}</td>
+                <td class="font-bold text-slate-900">${i.Modelo || i['MODELO/Nombre']}</td>
+                <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || i['N° SERIE']}</td>
+                <td><span class="text-[9px] font-bold px-2 py-1 rounded-full ${i.Estado.includes('Operacion') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado}</span></td>
+                <td class="text-center pr-4"><button onclick="pushNav('Detalle', {ID: ${i.ID}}, 'detail')" class="text-indigo-600 border border-indigo-200 px-3 py-1 rounded text-xs font-bold hover:bg-indigo-600 hover:text-white transition-colors">Ficha</button></td>
+            </tr>`).join('');
+            container.innerHTML = html + `</tbody></table>`;
+        }
+
+        function searchMaterials(q) {
+            renderMaterialsTable(currentFilteredData.filter(i => (i.Modelo||i['MODELO/Nombre']||'').toLowerCase().includes(q.toLowerCase()) || (i['N Serie']||i['N° SERIE']||'').toLowerCase().includes(q.toLowerCase())));
+        }
+
+        // --- FICHA TÉCNICA ---
+        function renderDetail() {
+            const i = currentFilteredData[0];
+            document.getElementById('item-ficha').innerHTML = `
+                <div class="glass-card-static overflow-hidden shadow-2xl">
+                    <div class="bg-indigo-600 p-8 text-white text-center relative">
+                        <i class="fa-solid fa-boxes-stacked absolute top-4 right-4 opacity-10 text-6xl"></i>
+                        <h2 class="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-2">Detalle de Material</h2>
+                        <h3 class="text-2xl font-black">${i.Modelo || i['MODELO/Nombre'] || '---'}</h3>
+                        <p class="text-[11px] uppercase opacity-90 mt-2">${i.Familia || 'Sin Familia'} / ${i.Categoria}</p>
+                    </div>
+                    <div class="p-6 md:p-8 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Número de Serie</p><p class="font-mono font-bold text-base text-indigo-600">${i['N Serie'] || i['N° SERIE'] || '---'}</p></div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Estado Operativo</p><p class="font-bold text-sm text-slate-800">${i.Estado}</p></div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-slate-400 font-bold uppercase text-[9px] mb-1">Condición Técnica</p><p class="font-bold text-sm text-slate-800">${i.Condicion || i.CONDICION || '---'}</p></div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100"><p class="text-indigo-400 font-bold uppercase text-[9px] mb-1">Sucursal Responsable</p><p class="font-bold text-sm text-indigo-900">${i['Sucursal Responsable'] || i['SUCURSAL RESPONSABLE'] || '---'}</p></div>
+                            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100"><p class="text-indigo-400 font-bold uppercase text-[9px] mb-1">Ubicación Física</p><p class="font-bold text-sm text-indigo-900">${i['Ubicacion Fisica'] || i['UBICACION FISICA'] || '---'}</p></div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[10px]">
+                            <div class="p-2 border-b"><p class="text-slate-400 font-bold uppercase">Proveedor</p><p class="font-bold">${i.Proveedor || i.PROVEEDOR || '---'}</p></div>
+                            <div class="p-2 border-b"><p class="text-slate-400 font-bold uppercase">Factura/Guía</p><p class="font-bold">${i['N° GUIA / FAC'] || i['Nro Factura'] || '---'}</p></div>
+                            <div class="p-2 border-b"><p class="text-slate-400 font-bold uppercase">Valor Neto</p><p class="font-bold text-emerald-600">${i['Valor Compra Neto'] || '---'}</p></div>
+                            <div class="p-2 border-b"><p class="text-slate-400 font-bold uppercase">Adquisición</p><p class="font-bold">${i['Fecha Adquisicion'] || i['Fecha Revision'] || '---'}</p></div>
+                        </div>
+                        <div class="bg-amber-50 p-5 rounded-xl border-l-4 border-amber-400"><p class="font-bold text-amber-700 uppercase text-[10px] mb-1">Observaciones</p><p class="text-sm text-slate-700 italic">"${i.Observaciones || i.OBS || 'Sin observaciones registradas.'}"</p></div>
+                        <button onclick="popNav(navStack.length - 2)" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-arrow-left mr-2"></i> Volver atrás</button>
+                    </div>
+                </div>`;
+        }
+
+        // --- INICIALIZACIÓN DASHBOARD ---
+        function updateDashboard() {
+            document.getElementById('kpi-total').innerText = rawData.length;
+            document.getElementById('kpi-op').innerText = rawData.filter(i => i.Estado.includes("Operacion")).length;
+            document.getElementById('kpi-maint').innerText = rawData.filter(i => i.Estado.includes("Mantencion")).length;
+            document.getElementById('kpi-risk').innerText = rawData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado)).length;
+            
+            if(chartInstances.estado) Object.values(chartInstances).forEach(c => c.destroy());
+            const gc = (k) => rawData.reduce((acc, i) => { let v = i[k] || i[k.toUpperCase()]; if(v) acc[v] = (acc[v]||0)+1; return acc; }, {});
+            
+            const common = { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}} };
+            chartInstances.estado = new Chart(document.getElementById('chartEstado'), { type:'doughnut', data:{ labels:Object.keys(gc('Estado')), datasets:[{data:Object.values(gc('Estado')), backgroundColor:['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6']}] }, options:common });
+            chartInstances.sucursal = new Chart(document.getElementById('chartSucursal'), { type:'doughnut', data:{ labels:Object.keys(gc('Sucursal Responsable')), datasets:[{data:Object.values(gc('Sucursal Responsable')), backgroundColor:['#6366f1','#10b981','#f59e0b']}] }, options:common });
+            
+            let ubi = gc('Ubicacion Fisica'), topUbi = Object.entries(ubi).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            chartInstances.fisica = new Chart(document.getElementById('chartFisica'), { type:'pie', data:{ labels:topUbi.map(u=>u[0]), datasets:[{data:topUbi.map(u=>u[1]), backgroundColor:['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9']}] }, options:common });
+            
+            let fam = gc('Familia');
+            chartInstances.cat = new Chart(document.getElementById('chartCat'), { type:'bar', data:{ labels:Object.keys(fam).map(c=>c.substring(0,10)), datasets:[{data:Object.values(fam), backgroundColor:'#6366f1'}] }, options:{...common, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}}} });
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
