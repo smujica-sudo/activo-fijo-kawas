@@ -56,7 +56,6 @@
         .chart-select:hover { border-color: #cbd5e1; background: white; }
         .chart-select:focus { border-color: #6366f1; color: #4f46e5; }
         
-        /* Pequeño indicador de carga silenciosa */
         #bg-sync-indicator { transition: opacity 0.3s; }
     </style>
 </head>
@@ -218,7 +217,7 @@
             <p class="text-xs font-bold text-slate-400 mb-6 tracking-wide">Escriba para filtrar la base completa, o seleccione directamente una Familia.</p>
             <div class="relative max-w-3xl mb-8">
                 <i class="fa-solid fa-search absolute left-5 top-1/2 -translate-y-1/2 text-indigo-500 text-lg"></i>
-                <input type="text" id="pre-live-search" onkeyup="handlePreLiveSearch(this.value)" placeholder="Escriba material, modelo, serie o categoría..." class="filter-input pl-12 font-semibold text-slate-700 bg-white border-2 border-indigo-200 focus:border-indigo-500 shadow-md">
+                <input type="text" id="pre-live-search" onkeyup="handlePreLiveSearch(this.value)" placeholder="Escriba material, modelo, serie, ubicación o categoría..." class="filter-input pl-12 font-semibold text-slate-700 bg-white border-2 border-indigo-200 focus:border-indigo-500 shadow-md">
             </div>
             <div id="grid-search-families" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </section>
@@ -229,16 +228,16 @@
             </div>
 
             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-4">
-                <div class="flex flex-col md:flex-row gap-4 md:items-end">
-                    <div class="w-full md:w-1/3">
+                <div class="flex flex-col xl:flex-row gap-4 xl:items-end">
+                    <div class="w-full xl:w-1/4">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Búsqueda Rápida</label>
                         <div class="relative">
                             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-indigo-400 text-sm"></i>
-                            <input type="text" id="master-live-search" onkeyup="handleLiveSearch(this.value)" placeholder="Modelo, Serie, Marca..." class="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-indigo-500 font-semibold text-slate-700 transition-all">
+                            <input type="text" id="master-live-search" onkeyup="handleLiveSearch(this.value)" placeholder="Modelo, Serie, Ubicación..." class="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-indigo-500 font-semibold text-slate-700 transition-all">
                         </div>
                     </div>
-                    <div class="w-full md:w-2/3 grid grid-cols-2 md:grid-cols-5 gap-3" id="top-filters-container"></div>
-                    <div class="w-full md:w-auto mt-2 md:mt-0 flex-shrink-0">
+                    <div class="w-full xl:w-3/4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" id="top-filters-container"></div>
+                    <div class="w-full xl:w-auto mt-2 xl:mt-0 flex-shrink-0">
                         <button onclick="resetMasterFilters()" class="w-full h-[38px] bg-slate-50 hover:bg-slate-200 text-slate-600 text-xs font-bold px-4 rounded-lg transition-colors flex justify-center items-center gap-2 border border-slate-200"><i class="fa-solid fa-eraser"></i> Limpiar</button>
                     </div>
                 </div>
@@ -302,7 +301,8 @@
         let dashboardFilters = { Familia: "", 'Sucursal Responsable': "", Categoria: "" };
         
         let masterSearchText = "";
-        let masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
+        // Añadida la Ubicacion Fisica a los filtros de cabecera
+        let masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "", 'Ubicacion Fisica': "" };
         let currentSort = { column: 'ID', asc: true };
 
         const EDITABLE_FIELDS = [
@@ -357,7 +357,6 @@
 
         // --- INICIALIZACIÓN Y CONEXIÓN API (STALE-WHILE-REVALIDATE) ---
         async function init() { 
-            // 1. Intentar cargar desde localStorage rápido
             const cachedData = localStorage.getItem('siaf_rawData');
             if (cachedData) {
                 try {
@@ -374,7 +373,6 @@
                 }
             }
             
-            // 2. Traer datos frescos silenciosamente en segundo plano
             await forceSync(false); 
         }
 
@@ -392,14 +390,12 @@
                 const res = await fetch(API_URL); 
                 const freshData = await res.json();
                 
-                // Actualizar variable global y memoria del navegador
                 rawData = freshData;
                 localStorage.setItem('siaf_rawData', JSON.stringify(rawData));
                 
                 const countEl = document.getElementById('items-count');
                 if (countEl) countEl.innerText = rawData.length;
                 
-                // Redibujar UI con datos frescos
                 initDashboardFilters(); 
                 initLocalChartFilters(); 
                 updateDashboard();
@@ -792,11 +788,20 @@
         function handlePreLiveSearch(val) { masterSearchText = val.toLowerCase(); renderSearchFamilies(); }
         function renderSearchFamilies() {
             const families = [...new Set(rawData.map(i => i.Familia || 'Sin Familia'))].sort();
-            let allMatchedItems = rawData.filter(i => { if(!masterSearchText) return true; return `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''}`.toLowerCase().includes(masterSearchText); });
+            let allMatchedItems = rawData.filter(i => { 
+                if(!masterSearchText) return true; 
+                // ACTUALIZADO: INCLUYE UBICACION FISICA
+                return `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''} ${i['Ubicacion Fisica']||''}`.toLowerCase().includes(masterSearchText); 
+            });
             let totalMatch = allMatchedItems.length; let totalVal = allMatchedItems.reduce((sum, i) => sum + getMarketValue(i), 0);
             let html = `<div onclick="goToMasterTable('', 'Búsqueda Global')" class="glass-card p-6 flex justify-between items-center bg-indigo-600 text-white hover:bg-indigo-700 shadow-md"><div><h4 class="font-bold text-lg">Toda la Base de Datos</h4><p class="text-[10px] text-indigo-200 uppercase font-bold">${totalMatch} Resultados | ${formatCurrency(totalVal)}</p></div><i class="fa-solid fa-globe text-indigo-300 text-2xl"></i></div>`;
             families.forEach(f => {
-                let matchedItems = rawData.filter(i => { if ((i.Familia || 'Sin Familia') !== f) return false; if(!masterSearchText) return true; return `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''}`.toLowerCase().includes(masterSearchText); });
+                let matchedItems = rawData.filter(i => { 
+                    if ((i.Familia || 'Sin Familia') !== f) return false; 
+                    if(!masterSearchText) return true; 
+                    // ACTUALIZADO: INCLUYE UBICACION FISICA
+                    return `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''} ${i['Ubicacion Fisica']||''}`.toLowerCase().includes(masterSearchText); 
+                });
                 let count = matchedItems.length; let val = matchedItems.reduce((sum, i) => sum + getMarketValue(i), 0);
                 if (masterSearchText && count === 0) return;
                 html += `<div onclick="goToMasterTable('${f}', 'Familia: ${f}')" class="glass-card p-6 flex justify-between items-center group border-l-4 border-indigo-400"><div><h4 class="font-bold text-slate-700">${f}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${count} Activos | ${formatCurrency(val)}</p></div><i class="fa-solid fa-folder-open text-slate-200 group-hover:text-indigo-600"></i></div>`;
@@ -804,14 +809,29 @@
             document.getElementById('grid-search-families').innerHTML = html;
         }
         function goToMasterTable(familia, title) { document.getElementById('master-live-search').value = masterSearchText; let queryObj = {}; if (familia !== '') queryObj = { Familia: familia }; pushNav(title, queryObj, 'search-table'); }
-        function resetMasterFiltersVariables() { masterSearchText = ""; document.getElementById('master-live-search').value = ""; masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" }; }
+        
+        function resetMasterFiltersVariables() { 
+            masterSearchText = ""; 
+            document.getElementById('master-live-search').value = ""; 
+            // ACTUALIZADO: AÑADIDO FILTRO UBICACION
+            masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "", 'Ubicacion Fisica': "" }; 
+        }
         function resetMasterFilters() { resetMasterFiltersVariables(); renderTopFilters(); applyMasterTableFilters(); }
 
         function renderTopFilters() {
-            const columns = [{ id: 'Familia', label: 'Familia' }, { id: 'Categoria', label: 'Categoría' }, { id: 'Marca', label: 'Marca' }, { id: 'Estado', label: 'Estado' }, { id: 'Sucursal Responsable', label: 'Sucursal' }];
+            // ACTUALIZADO: AÑADIDO FILTRO UBICACION
+            const columns = [
+                { id: 'Familia', label: 'Familia' }, 
+                { id: 'Categoria', label: 'Categoría' }, 
+                { id: 'Marca', label: 'Marca' }, 
+                { id: 'Estado', label: 'Estado' }, 
+                { id: 'Sucursal Responsable', label: 'Sucursal' },
+                { id: 'Ubicacion Fisica', label: 'Ubicación' }
+            ];
             let html = '';
             columns.forEach(col => {
-                let options = [...new Set(currentFilteredData.map(i => i[col.id] || 'Sin Asignar').filter(Boolean))].sort(); let currentVal = masterHeaderFilters[col.id] || "";
+                let options = [...new Set(currentFilteredData.map(i => i[col.id] || 'Sin Asignar').filter(Boolean))].sort(); 
+                let currentVal = masterHeaderFilters[col.id] || "";
                 html += `<div><label class="block text-[9px] font-bold text-slate-400 uppercase mb-1 truncate" title="${col.label}">${col.label}</label><select class="w-full py-2 px-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50 font-semibold text-slate-700 cursor-pointer transition-colors hover:bg-white" onchange="updateHeaderFilter('${col.id}', this.value)"><option value="">Todas</option>`;
                 options.forEach(o => { let valToSet = o === 'Sin Asignar' ? '' : o; let sel = (valToSet === currentVal) ? 'selected' : ''; html += `<option value="${valToSet}" ${sel}>${o.length > 18 ? o.substring(0,18) + '...' : o}</option>`; });
                 html += `</select></div>`;
@@ -825,11 +845,19 @@
 
         function applyMasterTableFilters() {
             let result = currentFilteredData.filter(i => {
-                let matchText = true; if (masterSearchText) { matchText = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''}`.toLowerCase().includes(masterSearchText); }
-                let mFam = !masterHeaderFilters.Familia || i.Familia === masterHeaderFilters.Familia; let mCat = !masterHeaderFilters.Categoria || i.Categoria === masterHeaderFilters.Categoria;
-                let mMar = !masterHeaderFilters.Marca || i.Marca === masterHeaderFilters.Marca; let mEst = !masterHeaderFilters.Estado || i.Estado === masterHeaderFilters.Estado;
+                let matchText = true; 
+                if (masterSearchText) { 
+                    // ACTUALIZADO: INCLUYE UBICACION FISICA
+                    matchText = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''} ${i['Ubicacion Fisica']||''}`.toLowerCase().includes(masterSearchText); 
+                }
+                let mFam = !masterHeaderFilters.Familia || i.Familia === masterHeaderFilters.Familia; 
+                let mCat = !masterHeaderFilters.Categoria || i.Categoria === masterHeaderFilters.Categoria;
+                let mMar = !masterHeaderFilters.Marca || i.Marca === masterHeaderFilters.Marca; 
+                let mEst = !masterHeaderFilters.Estado || i.Estado === masterHeaderFilters.Estado;
                 let mSuc = !masterHeaderFilters['Sucursal Responsable'] || i['Sucursal Responsable'] === masterHeaderFilters['Sucursal Responsable'];
-                return matchText && mFam && mCat && mMar && mEst && mSuc;
+                let mUbi = !masterHeaderFilters['Ubicacion Fisica'] || i['Ubicacion Fisica'] === masterHeaderFilters['Ubicacion Fisica']; // NUEVO FILTRO
+                
+                return matchText && mFam && mCat && mMar && mEst && mSuc && mUbi;
             });
             result.sort((a, b) => { let vA = (a[currentSort.column] || '').toString().toLowerCase(); let vB = (b[currentSort.column] || '').toString().toLowerCase(); if (vA < vB) return currentSort.asc ? -1 : 1; if (vA > vB) return currentSort.asc ? 1 : -1; return 0; });
             drawMasterTable(result);
@@ -838,22 +866,19 @@
 
         function drawMasterTable(list) {
             const container = document.getElementById('table-master-container');
-            
             let html = `<table class="data-table"><thead><tr>
                 <th class="sortable pl-4" onclick="sortMasterTable('Familia')">Familia ${getSortIcon('Familia')}</th>
                 <th class="sortable" onclick="sortMasterTable('Categoria')">Categoría ${getSortIcon('Categoria')}</th>
                 <th class="sortable" onclick="sortMasterTable('Marca')">Marca ${getSortIcon('Marca')}</th>
                 <th class="sortable" onclick="sortMasterTable('Modelo')">Modelo ${getSortIcon('Modelo')}</th>
                 <th class="sortable" onclick="sortMasterTable('N Serie')">Serie ${getSortIcon('N Serie')}</th>
-                <th class="sortable" onclick="sortMasterTable('Valor de Mercado Estimado')">Valor Estimado ${getSortIcon('Valor de Mercado Estimado')}</th>
+                <th class="sortable" onclick="sortMasterTable('Valor de Mercado Estimado')">Valor Est. ${getSortIcon('Valor de Mercado Estimado')}</th>
                 <th class="sortable" onclick="sortMasterTable('Estado')">Estado ${getSortIcon('Estado')}</th>
                 <th class="sortable" onclick="sortMasterTable('Sucursal Responsable')">Sucursal ${getSortIcon('Sucursal Responsable')}</th>
                 <th class="sortable" onclick="sortMasterTable('Ubicacion Fisica')">Ubicación ${getSortIcon('Ubicacion Fisica')}</th>
                 <th class="nosort text-center pr-4">Acción</th></tr></thead><tbody class="text-sm">`;
-                
-            if (list.length === 0) { 
-                html += `<tr><td colspan="10" class="p-12 text-center text-slate-400 font-bold"><i class="fa-solid fa-ghost text-3xl mb-3 opacity-30"></i><br>No se encontraron resultados.</td></tr>`; 
-            } else {
+            if (list.length === 0) { html += `<tr><td colspan="10" class="p-12 text-center text-slate-400 font-bold"><i class="fa-solid fa-ghost text-3xl mb-3 opacity-30"></i><br>No se encontraron resultados.</td></tr>`; } 
+            else {
                 html += list.map(i => `<tr>
                     <td class="text-xs text-slate-400 font-bold pl-4">${i.Familia || '---'}</td>
                     <td class="text-xs text-slate-500 font-bold">${i.Categoria || '---'}</td>
