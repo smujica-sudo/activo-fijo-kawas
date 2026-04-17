@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIAF 2026 - BI & Análisis Financiero</title>
+    <title>SIAF 2026 - BI Interactivo Modular</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,9 +16,10 @@
         
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; transition: all 0.2s; cursor: pointer; }
         .glass-card:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .glass-card-chart { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; transition: all 0.2s; cursor: pointer; }
-        .glass-card-chart:hover { border-color: #6366f1; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
-        .glass-card-static { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; }
+        
+        /* Modificado para alojar controles sin que toda la tarjeta sea clickeable */
+        .glass-card-static { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; transition: border-color 0.2s; }
+        .glass-card-static:hover { border-color: #cbd5e1; }
         
         .breadcrumb-item::after { content: '›'; margin: 0 8px; color: #818cf8; font-weight: 400; }
         .breadcrumb-item:last-child::after { content: ''; }
@@ -36,6 +37,13 @@
         
         .filter-input { width: 100%; padding: 0.875rem 1.25rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-size: 0.875rem; outline: none; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .filter-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        
+        /* Selects Locales de las Gráficas */
+        .chart-select { width: 100%; padding: 0.25rem 0.5rem; font-size: 0.6rem; text-transform: uppercase; border: 1px solid #e2e8f0; border-radius: 0.375rem; background: #f8fafc; outline: none; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s; }
+        .chart-select:hover { border-color: #cbd5e1; background: white; }
+        .chart-select:focus { border-color: #6366f1; color: #4f46e5; }
+        
+        .header-select { width: 100%; padding: 0.25rem; font-size: 0.65rem; text-transform: uppercase; border: 1px solid #cbd5e1; border-radius: 0.25rem; background: white; outline: none; font-weight: 600; color: #475569; cursor: pointer; }
     </style>
 </head>
 <body class="text-slate-900">
@@ -71,24 +79,6 @@
     <main class="container mx-auto px-4 py-6">
 
         <section id="view-dashboard" class="view-section active">
-            
-            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-wrap gap-4 items-end">
-                <div class="flex-grow min-w-[150px]">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Filtrar Dashboard: Familia</label>
-                    <select id="dash-filter-familia" onchange="applyDashboardFilters()" class="w-full p-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50 font-semibold text-slate-700"></select>
-                </div>
-                <div class="flex-grow min-w-[150px]">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Categoría</label>
-                    <select id="dash-filter-categoria" onchange="applyDashboardFilters()" class="w-full p-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50 font-semibold text-slate-700"></select>
-                </div>
-                <div class="flex-grow min-w-[150px]">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Sucursal Responsable</label>
-                    <select id="dash-filter-sucursal" onchange="applyDashboardFilters()" class="w-full p-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50 font-semibold text-slate-700"></select>
-                </div>
-                <div>
-                    <button onclick="resetDashboardFilters()" class="h-[34px] px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-colors border border-slate-200" title="Limpiar Filtros del Dashboard"><i class="fa-solid fa-eraser"></i></button>
-                </div>
-            </div>
 
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
                 <div onclick="startNav('Inventario General', {})" class="glass-card p-5 border-l-4 border-indigo-600 bg-indigo-50">
@@ -120,33 +110,80 @@
             <h2 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest border-b border-slate-200 pb-2"><i class="fa-solid fa-chart-pie mr-1"></i> Distribución Operativa (Cantidades)</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                <div class="glass-card-chart p-6 group">
-                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-500 uppercase">Estado Operativo</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
-                    <div class="h-56"><canvas id="chartEstado"></canvas></div>
+                <div class="glass-card-static p-5 flex flex-col group">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Estado Operativo</h3>
+                        <span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <select id="flt-estado-fam" onchange="updateLocalChart('estado')" class="chart-select"><option value="">-- Familia --</option></select>
+                        <select id="flt-estado-suc" onchange="updateLocalChart('estado')" class="chart-select"><option value="">-- Sucursal --</option></select>
+                    </div>
+                    <div class="h-48 relative cursor-pointer"><canvas id="chartEstado"></canvas></div>
                 </div>
-                <div class="glass-card-chart p-6 group">
-                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-500 uppercase">Inventario por Familia</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
-                    <div class="h-56"><canvas id="chartCat"></canvas></div>
+
+                <div class="glass-card-static p-5 flex flex-col group">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Inventario por Familia</h3>
+                        <span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <select id="flt-cat-suc" onchange="updateLocalChart('cat')" class="chart-select"><option value="">-- Sucursal --</option></select>
+                        <select id="flt-cat-est" onchange="updateLocalChart('cat')" class="chart-select"><option value="">-- Estado --</option></select>
+                    </div>
+                    <div class="h-48 relative cursor-pointer"><canvas id="chartCat"></canvas></div>
                 </div>
-                <div class="glass-card-chart p-6 group">
-                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-500 uppercase">Sucursal Responsable</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
-                    <div class="h-56"><canvas id="chartSucursal"></canvas></div>
+
+                <div class="glass-card-static p-5 flex flex-col group">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Sucursal Responsable</h3>
+                        <span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <select id="flt-sucursal-fam" onchange="updateLocalChart('sucursal')" class="chart-select"><option value="">-- Familia --</option></select>
+                        <select id="flt-sucursal-est" onchange="updateLocalChart('sucursal')" class="chart-select"><option value="">-- Estado --</option></select>
+                    </div>
+                    <div class="h-48 relative cursor-pointer"><canvas id="chartSucursal"></canvas></div>
                 </div>
-                <div class="glass-card-chart p-6 group">
-                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-500 uppercase">Top Bodegas / Ubicaciones</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
-                    <div class="h-56"><canvas id="chartFisica"></canvas></div>
+
+                <div class="glass-card-static p-5 flex flex-col group">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Top Bodegas / Ubicaciones</h3>
+                        <span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <select id="flt-fisica-fam" onchange="updateLocalChart('fisica')" class="chart-select"><option value="">-- Familia --</option></select>
+                        <select id="flt-fisica-est" onchange="updateLocalChart('fisica')" class="chart-select"><option value="">-- Estado --</option></select>
+                    </div>
+                    <div class="h-48 relative cursor-pointer"><canvas id="chartFisica"></canvas></div>
                 </div>
             </div>
 
             <h2 class="text-xs font-black text-emerald-500 uppercase mb-4 tracking-widest border-b border-emerald-100 pb-2"><i class="fa-solid fa-chart-line mr-1"></i> Análisis Financiero (Valor de Mercado)</h2>
+            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass-card-chart p-6 group border-t-2 border-t-emerald-400">
-                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-500 uppercase">Valorización por Familia</h3><span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
-                    <div class="h-64"><canvas id="chartValFam"></canvas></div>
+                <div class="glass-card-static p-5 flex flex-col group border-t-2 border-t-emerald-400">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-emerald-300"></i> Valorización por Familia</h3>
+                        <span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <select id="flt-valFam-suc" onchange="updateLocalChart('valFam')" class="chart-select border-emerald-100"><option value="">-- Sucursal --</option></select>
+                        <select id="flt-valFam-est" onchange="updateLocalChart('valFam')" class="chart-select border-emerald-100"><option value="">-- Estado --</option></select>
+                    </div>
+                    <div class="h-64 relative cursor-pointer"><canvas id="chartValFam"></canvas></div>
                 </div>
-                <div class="glass-card-chart p-6 group border-t-2 border-t-emerald-400">
-                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-500 uppercase">Valorización por Sucursal</h3><span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
-                    <div class="h-64"><canvas id="chartValSuc"></canvas></div>
+
+                <div class="glass-card-static p-5 flex flex-col group border-t-2 border-t-emerald-400">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-emerald-300"></i> Valorización por Sucursal</h3>
+                        <span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <select id="flt-valSuc-fam" onchange="updateLocalChart('valSuc')" class="chart-select border-emerald-100"><option value="">-- Familia --</option></select>
+                        <select id="flt-valSuc-est" onchange="updateLocalChart('valSuc')" class="chart-select border-emerald-100"><option value="">-- Estado --</option></select>
+                    </div>
+                    <div class="h-64 relative cursor-pointer"><canvas id="chartValSuc"></canvas></div>
                 </div>
             </div>
         </section>
@@ -219,39 +256,23 @@
         let currentFilteredData = [];
         let chartInstances = {};
         
-        let dashboardFilteredData = [];
-        let dashboardFilters = { Familia: "", 'Sucursal Responsable': "", Categoria: "" };
-        
+        // Filtros de Tablas Maestras
         let masterSearchText = "";
         let masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
         let currentSort = { column: 'ID', asc: true };
 
-        // --- LÓGICA FINANCIERA REPARADA Y BLINDADA ---
+        // --- SISTEMA FINANCIERO BLINDADO ---
         function getMarketValue(item) {
             let val = 0;
-            // 1. Busca coincidencias exactas comunes
             const targetKeys = ['Valor de Mercado Estimado', 'Valor Mercado', 'Valor de Mercado', 'Valor Estimado', 'Valor'];
-            for (let k of targetKeys) {
-                if (item[k] !== undefined && item[k] !== "") { val = item[k]; break; }
-            }
-            
-            // 2. Si no lo encuentra, busca cualquier llave que contenga "valor" y "mercado"
+            for (let k of targetKeys) { if (item[k] !== undefined && item[k] !== "") { val = item[k]; break; } }
             if (!val) {
-                for (let k in item) {
-                    if (k.toLowerCase().includes('valor') && k.toLowerCase().includes('mercado')) {
-                        val = item[k]; break;
-                    }
-                }
+                for (let k in item) { if (k.toLowerCase().includes('valor') && k.toLowerCase().includes('mercado')) { val = item[k]; break; } }
             }
-
             if (!val) return 0;
-            
-            // 3. Parseo seguro de formatos chilenos y textos
             if (typeof val === 'number') return val;
             if (typeof val === 'string') {
-                // Elimina símbolos de peso y espacios
                 let cleanStr = val.replace(/\$|\s/g, '');
-                // Quita puntos de miles y cambia comas por puntos (ej: 1.500,50 -> 1500.50)
                 cleanStr = cleanStr.replace(/\./g, '').replace(',', '.');
                 return parseFloat(cleanStr) || 0;
             }
@@ -271,13 +292,13 @@
         async function forceSync(manual = true) {
             const syncIcon = document.getElementById('sync-icon');
             if (manual) syncIcon.classList.add('fa-spin'); 
-
             try {
                 const res = await fetch(API_URL);
                 rawData = await res.json();
                 document.getElementById('items-count').innerText = rawData.length;
-                initDashboardFilters();
-                updateDashboard();
+                initLocalChartFilters();
+                updateDashboardKPIs();
+                updateAllLocalCharts();
                 if (navStack.length > 0) processNavState(); 
             } catch (e) { 
                 console.error("Error API:", e);
@@ -287,125 +308,160 @@
             }
         }
 
-        // --- SISTEMA DASHBOARD (FILTROS Y KPI) ---
-        function initDashboardFilters() {
-            const buildOpts = (key, id) => {
-                const unique = [...new Set(rawData.map(i => i[key]).filter(Boolean))].sort();
-                let html = `<option value="">Todas</option>` + unique.map(u => `<option value="${u}">${u}</option>`).join('');
-                document.getElementById(id).innerHTML = html;
-            };
-            buildOpts('Familia', 'dash-filter-familia');
-            buildOpts('Categoria', 'dash-filter-categoria');
-            buildOpts('Sucursal Responsable', 'dash-filter-sucursal');
-        }
-
-        function applyDashboardFilters() {
-            dashboardFilters.Familia = document.getElementById('dash-filter-familia').value;
-            dashboardFilters.Categoria = document.getElementById('dash-filter-categoria').value;
-            dashboardFilters['Sucursal Responsable'] = document.getElementById('dash-filter-sucursal').value;
-            updateDashboard();
-        }
-
-        function resetDashboardFilters() {
-            document.getElementById('dash-filter-familia').value = "";
-            document.getElementById('dash-filter-categoria').value = "";
-            document.getElementById('dash-filter-sucursal').value = "";
-            applyDashboardFilters();
-        }
-
-        function updateDashboard() {
-            // 1. Filtrar Base Dashboard
-            dashboardFilteredData = rawData.filter(i => {
-                let matchF = !dashboardFilters.Familia || i.Familia === dashboardFilters.Familia;
-                let matchC = !dashboardFilters.Categoria || i.Categoria === dashboardFilters.Categoria;
-                let matchS = !dashboardFilters['Sucursal Responsable'] || i['Sucursal Responsable'] === dashboardFilters['Sucursal Responsable'];
-                return matchF && matchC && matchS;
-            });
-
-            // 2. KPIs
-            document.getElementById('kpi-total').innerText = dashboardFilteredData.length;
-            document.getElementById('kpi-op').innerText = dashboardFilteredData.filter(i => (i.Estado||'').includes("Operacion")).length;
-            document.getElementById('kpi-maint').innerText = dashboardFilteredData.filter(i => (i.Estado||'').includes("Mantencion")).length;
-            document.getElementById('kpi-risk').innerText = dashboardFilteredData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado || '')).length;
-            
-            const totalMercado = dashboardFilteredData.reduce((sum, i) => sum + getMarketValue(i), 0);
+        // --- SISTEMA DASHBOARD MODULAR (NUEVO) ---
+        function updateDashboardKPIs() {
+            document.getElementById('kpi-total').innerText = rawData.length;
+            document.getElementById('kpi-op').innerText = rawData.filter(i => (i.Estado||'').includes("Operacion")).length;
+            document.getElementById('kpi-maint').innerText = rawData.filter(i => (i.Estado||'').includes("Mantencion")).length;
+            document.getElementById('kpi-risk').innerText = rawData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado || '')).length;
+            const totalMercado = rawData.reduce((sum, i) => sum + getMarketValue(i), 0);
             document.getElementById('kpi-valor').innerText = formatCurrency(totalMercado);
-            
-            // 3. Gráficos Base
-            if(chartInstances.estado) Object.values(chartInstances).forEach(c => c.destroy());
-            
-            const gc = (k) => dashboardFilteredData.reduce((acc, i) => { let v = i[k] || i[k.toUpperCase()]; if(v) acc[v] = (acc[v]||0)+1; return acc; }, {});
-            
-            const estLabels = Object.keys(gc('Estado'));
-            const estData = Object.values(gc('Estado'));
-            const colorMap = { 'Operacion': '#10b981', 'Mantencion': '#f59e0b', 'Perdido': '#ef4444', 'Vendido': '#ef4444' };
-            const getCol = (l) => { for(let k in colorMap) if((l||'').includes(k)) return colorMap[k]; return '#6366f1'; };
-
-            chartInstances.estado = new Chart(document.getElementById('chartEstado'), { 
-                type: 'bar', data: { labels: estLabels, datasets: [{ data: estData, backgroundColor: estLabels.map(getCol), borderRadius: 4 }] }, 
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    scales: { y: { ticks: { autoSkip: false, font: { size: 10, family: "'Inter', sans-serif" } }, grid: { display: false } }, x: { ticks: { font: { size: 10 } } } },
-                    onClick: (e, el) => { if(el.length) openTableFromKPI('Estado: ' + estLabels[el[0].index], { Estado: estLabels[el[0].index] }); else openTableFromKPI('Todos los Estados', {}); }
-                } 
-            });
-
-            const sucLabels = Object.keys(gc('Sucursal Responsable'));
-            chartInstances.sucursal = new Chart(document.getElementById('chartSucursal'), { 
-                type:'doughnut', data:{ labels:sucLabels, datasets:[{data:Object.values(gc('Sucursal Responsable')), backgroundColor:['#6366f1','#10b981','#f59e0b']}] }, 
-                options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}},
-                onClick: (e, el) => { if(el.length) openTableFromKPI('Sede: ' + sucLabels[el[0].index], { 'Sucursal Responsable': sucLabels[el[0].index] }); else openTableFromKPI('Todas las Sedes', {}); }} 
-            });
-            
-            let ubi = gc('Ubicacion Fisica'), topUbi = Object.entries(ubi).sort((a,b)=>b[1]-a[1]).slice(0,5);
-            chartInstances.fisica = new Chart(document.getElementById('chartFisica'), { 
-                type:'pie', data:{ labels:topUbi.map(u=>u[0]), datasets:[{data:topUbi.map(u=>u[1]), backgroundColor:['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9']}] }, 
-                options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}},
-                onClick: (e, el) => { if(el.length) openTableFromKPI('Bodega: ' + topUbi[el[0].index][0], { 'Ubicacion Fisica': topUbi[el[0].index][0] }); else openTableFromKPI('Todas las Bodegas', {}); }} 
-            });
-            
-            let fam = gc('Familia'); let famLabels = Object.keys(fam);
-            chartInstances.cat = new Chart(document.getElementById('chartCat'), { 
-                type:'bar', data:{ labels:famLabels.map(c=>c.substring(0,10)), datasets:[{data:Object.values(fam), backgroundColor:'#6366f1', borderRadius: 4}] }, 
-                options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}},
-                onClick: (e, el) => { if(el.length) openTableFromKPI('Familia: ' + famLabels[el[0].index], { Familia: famLabels[el[0].index] }); else openTableFromKPI('Todas las Familias', {}); }} 
-            });
-
-            // 4. NUEVOS GRÁFICOS FINANCIEROS (Basados en sumas monetarias, no en cantidades)
-            const sumBy = (key) => dashboardFilteredData.reduce((acc, i) => {
-                let v = i[key] || 'Sin Asignar';
-                acc[v] = (acc[v] || 0) + getMarketValue(i);
-                return acc;
-            }, {});
-
-            // Valor por Familia
-            let valFamData = sumBy('Familia');
-            // Ordenar de mayor a menor valor
-            let sortedValFam = Object.entries(valFamData).sort((a,b)=>b[1]-a[1]);
-            
-            chartInstances.valFam = new Chart(document.getElementById('chartValFam'), {
-                type: 'bar',
-                data: { labels: sortedValFam.map(i=>i[0].substring(0,12)), datasets: [{ data: sortedValFam.map(i=>i[1]), backgroundColor: '#10b981', borderRadius: 4 }] },
-                options: {
-                    responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip: { callbacks: { label: function(c) { return formatCurrency(c.raw); } } } },
-                    scales:{x:{grid:{display:false}}},
-                    onClick: (e, el) => { if(el.length) openTableFromKPI('Familia: ' + sortedValFam[el[0].index][0], { Familia: sortedValFam[el[0].index][0] }); else openTableFromKPI('Todas las Familias', {}); }
-                }
-            });
-
-            // Valor por Sucursal
-            let valSucData = sumBy('Sucursal Responsable');
-            let sortedValSuc = Object.entries(valSucData).sort((a,b)=>b[1]-a[1]).slice(0,6); // Top 6
-            chartInstances.valSuc = new Chart(document.getElementById('chartValSuc'), {
-                type: 'doughnut',
-                data: { labels: sortedValSuc.map(i=>i[0]), datasets: [{ data: sortedValSuc.map(i=>i[1]), backgroundColor: ['#10b981','#34d399','#6ee7b7','#a7f3d0','#059669','#047857'] }] },
-                options: {
-                    responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'right', labels:{font:{size:9}}}, tooltip: { callbacks: { label: function(c) { return formatCurrency(c.raw); } } } },
-                    onClick: (e, el) => { if(el.length) openTableFromKPI('Sede: ' + sortedValSuc[el[0].index][0], { 'Sucursal Responsable': sortedValSuc[el[0].index][0] }); else openTableFromKPI('Todas las Sedes', {}); }
-                }
-            });
         }
 
-        // --- SISTEMA NAVEGACIÓN ---
+        function initLocalChartFilters() {
+            const popSelect = (id, key) => {
+                const el = document.getElementById(id);
+                if(!el) return;
+                const unique = [...new Set(rawData.map(i => i[key]).filter(Boolean))].sort();
+                let html = el.options[0].outerHTML; 
+                unique.forEach(u => html += `<option value="${u}">${u.length > 15 ? u.substring(0,15)+'...' : u}</option>`);
+                el.innerHTML = html;
+            };
+            
+            popSelect('flt-estado-fam', 'Familia'); popSelect('flt-estado-suc', 'Sucursal Responsable');
+            popSelect('flt-cat-suc', 'Sucursal Responsable'); popSelect('flt-cat-est', 'Estado');
+            popSelect('flt-sucursal-fam', 'Familia'); popSelect('flt-sucursal-est', 'Estado');
+            popSelect('flt-fisica-fam', 'Familia'); popSelect('flt-fisica-est', 'Estado');
+            popSelect('flt-valFam-suc', 'Sucursal Responsable'); popSelect('flt-valFam-est', 'Estado');
+            popSelect('flt-valSuc-fam', 'Familia'); popSelect('flt-valSuc-est', 'Estado');
+        }
+
+        function updateLocalChart(chartId) {
+            renderSpecificChart(chartId);
+        }
+
+        function updateAllLocalCharts() {
+            ['estado', 'cat', 'sucursal', 'fisica', 'valFam', 'valSuc'].forEach(renderSpecificChart);
+        }
+
+        function renderSpecificChart(id) {
+            if(chartInstances[id]) chartInstances[id].destroy();
+            
+            // 1. Capturar los filtros locales activos para ESE gráfico en particular
+            let fFam = "", fSuc = "", fEst = "";
+            if(id === 'estado') { fFam = document.getElementById('flt-estado-fam').value; fSuc = document.getElementById('flt-estado-suc').value; }
+            if(id === 'cat') { fSuc = document.getElementById('flt-cat-suc').value; fEst = document.getElementById('flt-cat-est').value; }
+            if(id === 'sucursal') { fFam = document.getElementById('flt-sucursal-fam').value; fEst = document.getElementById('flt-sucursal-est').value; }
+            if(id === 'fisica') { fFam = document.getElementById('flt-fisica-fam').value; fEst = document.getElementById('flt-fisica-est').value; }
+            if(id === 'valFam') { fSuc = document.getElementById('flt-valFam-suc').value; fEst = document.getElementById('flt-valFam-est').value; }
+            if(id === 'valSuc') { fFam = document.getElementById('flt-valSuc-fam').value; fEst = document.getElementById('flt-valSuc-est').value; }
+
+            // 2. Filtrar los datos localmente
+            let localData = rawData.filter(i => {
+                let mF = !fFam || i.Familia === fFam;
+                let mS = !fSuc || i['Sucursal Responsable'] === fSuc;
+                let mE = !fEst || i.Estado === fEst;
+                return mF && mS && mE;
+            });
+
+            // 3. Preparar la "Herencia" de filtros si el usuario pincha el gráfico
+            let baseQuery = {};
+            if(fFam) baseQuery.Familia = fFam;
+            if(fSuc) baseQuery['Sucursal Responsable'] = fSuc;
+            if(fEst) baseQuery.Estado = fEst;
+
+            const common = { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}} };
+            const gc = (k) => localData.reduce((acc, i) => { let v = i[k] || i[k.toUpperCase()]; if(v) acc[v] = (acc[v]||0)+1; return acc; }, {});
+
+            // 4. Dibujar Gráfico Específico
+            if (id === 'estado') {
+                const estLabels = Object.keys(gc('Estado'));
+                const colorMap = { 'Operacion': '#10b981', 'Mantencion': '#f59e0b', 'Perdido': '#ef4444', 'Vendido': '#ef4444' };
+                const getCol = (l) => { for(let k in colorMap) if((l||'').includes(k)) return colorMap[k]; return '#6366f1'; };
+                chartInstances.estado = new Chart(document.getElementById('chartEstado'), { 
+                    type: 'bar', data: { labels: estLabels, datasets: [{ data: Object.values(gc('Estado')), backgroundColor: estLabels.map(getCol), borderRadius: 4 }] }, 
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                        scales: { y: { ticks: { autoSkip: false, font: { size: 10 } }, grid: { display: false } }, x: { ticks: { font: { size: 10 } } } },
+                        onClick: (e, el) => { 
+                            let q = {...baseQuery};
+                            if(el.length) { q.Estado = estLabels[el[0].index]; openTableFromKPI('Estado: ' + q.Estado, q); }
+                            else { openTableFromKPI('Todos los Estados', q); }
+                        }
+                    } 
+                });
+            }
+            
+            else if (id === 'cat') {
+                let fam = gc('Familia'); let famLabels = Object.keys(fam);
+                chartInstances.cat = new Chart(document.getElementById('chartCat'), { 
+                    type:'bar', data:{ labels:famLabels.map(c=>c.substring(0,10)), datasets:[{data:Object.values(fam), backgroundColor:'#6366f1', borderRadius: 4}] }, 
+                    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}},
+                    onClick: (e, el) => { 
+                        let q = {...baseQuery};
+                        if(el.length) { q.Familia = famLabels[el[0].index]; openTableFromKPI('Familia: ' + q.Familia, q); }
+                        else { openTableFromKPI('Todas las Familias', q); }
+                    }} 
+                });
+            }
+
+            else if (id === 'sucursal') {
+                const sucLabels = Object.keys(gc('Sucursal Responsable'));
+                chartInstances.sucursal = new Chart(document.getElementById('chartSucursal'), { 
+                    type:'doughnut', data:{ labels:sucLabels, datasets:[{data:Object.values(gc('Sucursal Responsable')), backgroundColor:['#6366f1','#10b981','#f59e0b']}] }, 
+                    options:{...common,
+                    onClick: (e, el) => { 
+                        let q = {...baseQuery};
+                        if(el.length) { q['Sucursal Responsable'] = sucLabels[el[0].index]; openTableFromKPI('Sede: ' + q['Sucursal Responsable'], q); }
+                        else { openTableFromKPI('Todas las Sedes', q); }
+                    }} 
+                });
+            }
+
+            else if (id === 'fisica') {
+                let ubi = gc('Ubicacion Fisica'), topUbi = Object.entries(ubi).sort((a,b)=>b[1]-a[1]).slice(0,5);
+                chartInstances.fisica = new Chart(document.getElementById('chartFisica'), { 
+                    type:'pie', data:{ labels:topUbi.map(u=>u[0]), datasets:[{data:topUbi.map(u=>u[1]), backgroundColor:['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9']}] }, 
+                    options:{...common,
+                    onClick: (e, el) => { 
+                        let q = {...baseQuery};
+                        if(el.length) { q['Ubicacion Fisica'] = topUbi[el[0].index][0]; openTableFromKPI('Bodega: ' + q['Ubicacion Fisica'], q); }
+                        else { openTableFromKPI('Todas las Bodegas', q); }
+                    }} 
+                });
+            }
+
+            else if (id === 'valFam') {
+                const sumByFam = localData.reduce((acc, i) => { let v = i.Familia || 'Sin Asignar'; acc[v] = (acc[v] || 0) + getMarketValue(i); return acc; }, {});
+                let sortedValFam = Object.entries(sumByFam).sort((a,b)=>b[1]-a[1]);
+                chartInstances.valFam = new Chart(document.getElementById('chartValFam'), {
+                    type: 'bar', data: { labels: sortedValFam.map(i=>i[0].substring(0,12)), datasets: [{ data: sortedValFam.map(i=>i[1]), backgroundColor: '#10b981', borderRadius: 4 }] },
+                    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip: { callbacks: { label: function(c) { return formatCurrency(c.raw); } } } }, scales:{x:{grid:{display:false}}},
+                        onClick: (e, el) => { 
+                            let q = {...baseQuery};
+                            if(el.length) { q.Familia = sortedValFam[el[0].index][0]; openTableFromKPI('Familia: ' + q.Familia, q); }
+                            else { openTableFromKPI('Todas las Familias', q); }
+                        }
+                    }
+                });
+            }
+
+            else if (id === 'valSuc') {
+                const sumBySuc = localData.reduce((acc, i) => { let v = i['Sucursal Responsable'] || 'Sin Asignar'; acc[v] = (acc[v] || 0) + getMarketValue(i); return acc; }, {});
+                let sortedValSuc = Object.entries(sumBySuc).sort((a,b)=>b[1]-a[1]).slice(0,6);
+                chartInstances.valSuc = new Chart(document.getElementById('chartValSuc'), {
+                    type: 'doughnut', data: { labels: sortedValSuc.map(i=>i[0]), datasets: [{ data: sortedValSuc.map(i=>i[1]), backgroundColor: ['#10b981','#34d399','#6ee7b7','#a7f3d0','#059669','#047857'] }] },
+                    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'right', labels:{font:{size:9}}}, tooltip: { callbacks: { label: function(c) { return formatCurrency(c.raw); } } } },
+                        onClick: (e, el) => { 
+                            let q = {...baseQuery};
+                            if(el.length) { q['Sucursal Responsable'] = sortedValSuc[el[0].index][0]; openTableFromKPI('Sede: ' + q['Sucursal Responsable'], q); }
+                            else { openTableFromKPI('Todas las Sedes', q); }
+                        }
+                    }
+                });
+            }
+        }
+
+        // --- SISTEMA DE NAVEGACIÓN Y TABLAS ---
         function popNav(index) {
             if (index === -1) {
                 navStack = []; 
@@ -424,15 +480,10 @@
 
         function openTableFromKPI(title, query) {
             resetMasterFiltersVariables();
-            // Heredar filtros del Dashboard
-            let finalQuery = { ...query };
-            if(dashboardFilters.Familia) finalQuery.Familia = dashboardFilters.Familia;
-            if(dashboardFilters.Categoria) finalQuery.Categoria = dashboardFilters.Categoria;
-            if(dashboardFilters['Sucursal Responsable']) finalQuery['Sucursal Responsable'] = dashboardFilters['Sucursal Responsable'];
-
+            // Los queries combinados ya vienen pre-inyectados desde el onclick del gráfico local.
             navStack = [
                 { title: 'Buscador', query: {}, view: 'search-families', isMasterSearch: true },
-                { title: title, query: finalQuery, view: 'search-table' }
+                { title: title, query: query, view: 'search-table' }
             ];
             processNavState();
         }
@@ -471,7 +522,6 @@
             else if (current.view === 'search-families') { renderSearchFamilies(); }
         }
 
-        // --- BUSCADOR MAESTRO ---
         function resetMasterFiltersVariables() {
             masterSearchText = "";
             document.getElementById('master-live-search').value = "";
@@ -507,7 +557,7 @@
                 let count = rawData.filter(i => {
                     if ((i.Familia || 'Sin Familia') !== f) return false;
                     if(!masterSearchText) return true;
-                    let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''}`.toLowerCase();
+                    let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''}`.toLowerCase();
                     return str.includes(masterSearchText);
                 }).length;
                 if (masterSearchText && count === 0) return;
@@ -544,7 +594,6 @@
 
         function openTableFromCategory(cat) { resetMasterFiltersVariables(); pushNav('Categoría: ' + cat, {Categoria: cat}, 'search-table'); }
 
-        // --- TABLA Y SIDEBAR ---
         function renderSidebarFilters() {
             const columns = [{ id: 'Familia', label: 'Familia' }, { id: 'Categoria', label: 'Categoría' }, { id: 'Marca', label: 'Fabricante / Marca' }, { id: 'Estado', label: 'Estado Operativo' }, { id: 'Sucursal Responsable', label: 'Sucursal' }];
             columns.forEach(col => {
