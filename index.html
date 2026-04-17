@@ -217,7 +217,7 @@
             <p class="text-xs font-bold text-slate-400 mb-6 tracking-wide">Escriba para filtrar la base completa, o seleccione directamente una Familia.</p>
             <div class="relative max-w-3xl mb-8">
                 <i class="fa-solid fa-search absolute left-5 top-1/2 -translate-y-1/2 text-indigo-500 text-lg"></i>
-                <input type="text" id="pre-live-search" onkeyup="handlePreLiveSearch(this.value)" placeholder="Escriba material, modelo, serie, ubicación o categoría..." class="filter-input pl-12 font-semibold text-slate-700 bg-white border-2 border-indigo-200 focus:border-indigo-500 shadow-md">
+                <input type="text" id="pre-live-search" onkeyup="handlePreLiveSearch(this.value)" placeholder="Escriba material, modelo, serie o categoría..." class="filter-input pl-12 font-semibold text-slate-700 bg-white border-2 border-indigo-200 focus:border-indigo-500 shadow-md">
             </div>
             <div id="grid-search-families" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </section>
@@ -280,7 +280,6 @@
     </main>
 
     <script>
-        // PEGA AQUÍ TU URL (Asegúrate de que termina en /exec)
         const API_URL = 'https://script.google.com/macros/s/AKfycby36cA1fdHcHZBlq3ZXh65qXzgX_c1ujI-c296gMt3e_SfzPA3tC6Mqu55DAmFeJvwj/exec'; 
         
         // --- CONSTANTES FINANCIERAS ---
@@ -301,15 +300,15 @@
         let dashboardFilters = { Familia: "", 'Sucursal Responsable': "", Categoria: "" };
         
         let masterSearchText = "";
-        // Añadida la Ubicacion Fisica a los filtros de cabecera
         let masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "", 'Ubicacion Fisica': "" };
         let currentSort = { column: 'ID', asc: true };
 
+        // ACTUALIZADO: Opciones base para selectores
         const EDITABLE_FIELDS = [
             {id: 'Familia', label: 'Familia', type: 'text'}, {id: 'Categoria', label: 'Categoría', type: 'text'}, {id: 'Marca', label: 'Marca', type: 'text'},
             {id: 'Modelo', label: 'Modelo', type: 'text'}, {id: 'N Serie', label: 'Número de Serie', type: 'text'},
-            {id: 'Estado', label: 'Estado Operativo', type: 'select', options: ['Uso Operacion', 'En Mantencion', 'Perdido', 'Vendido', 'Pendiente', 'Bodega Base']},
-            {id: 'Condicion', label: 'Condición', type: 'select', options: ['Operativo', 'Malo', 'Regular', 'Nuevo']},
+            {id: 'Estado', label: 'Estado Operativo', type: 'select', baseOptions: ['Uso Operacion', 'En Mantencion', 'Perdido', 'Vendido', 'Pendiente', 'Bodega Base']},
+            {id: 'Condicion', label: 'Condición', type: 'select', baseOptions: ['Operativo', 'Malo', 'Regular', 'Nuevo']},
             {id: 'Sucursal Responsable', label: 'Sucursal Responsable', type: 'text'}, {id: 'Ubicacion Fisica', label: 'Ubicación Física', type: 'text'},
             {id: 'Contrato', label: 'Tipo de Contrato', type: 'text'}, {id: 'Proveedor', label: 'Proveedor', type: 'text'},
             {id: 'N° GUIA / FAC', label: 'Guía / Factura', type: 'text'}, {id: 'Fecha Adquisicion', label: 'Fecha Adquisición', type: 'text'},
@@ -710,14 +709,18 @@
             else if (current.view === 'form') { renderNewForm(); }
         }
 
-        // --- FUNCIONES CRUD ---
+        // --- FUNCIONES CRUD (DINÁMICAS) ---
         function renderNewForm() {
             let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
             EDITABLE_FIELDS.forEach(f => {
                 html += `<div><label class="form-label">${f.label}</label>`;
                 if (f.type === 'select') {
                     html += `<select id="new-${f.id}" class="form-input"><option value="">-- Seleccionar --</option>`;
-                    f.options.forEach(o => html += `<option value="${o}">${o}</option>`);
+                    // ACTUALIZADO: Opciones combinadas (base + base de datos real)
+                    let dbOptions = rawData.map(i => i[f.id]).filter(Boolean);
+                    let combinedOptions = [...new Set([...(f.baseOptions || []), ...dbOptions])].sort();
+                    
+                    combinedOptions.forEach(o => html += `<option value="${o}">${o}</option>`);
                     html += `</select></div>`;
                 } else { html += `<input type="${f.type==='number'?'number':'text'}" id="new-${f.id}" class="form-input" placeholder="Ingrese ${f.label.toLowerCase()}..."></div>`; }
             });
@@ -773,7 +776,12 @@
                     html += `<div><label class="form-label">${f.label}</label>`;
                     if(f.type === 'select') {
                         html += `<select id="edit-${f.id}" class="form-input"><option value="">-- Seleccionar --</option>`;
-                        f.options.forEach(o => html += `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`);
+                        
+                        // ACTUALIZADO: Opciones combinadas (base + base de datos real)
+                        let dbOptions = rawData.map(i => i[f.id]).filter(Boolean);
+                        let combinedOptions = [...new Set([...(f.baseOptions || []), ...dbOptions])].sort();
+                        
+                        combinedOptions.forEach(o => html += `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`);
                         html += `</select></div>`;
                     } else { html += `<input type="${f.type==='number'?'number':'text'}" id="edit-${f.id}" value="${val}" class="form-input"></div>`; }
                 });
@@ -790,7 +798,6 @@
             const families = [...new Set(rawData.map(i => i.Familia || 'Sin Familia'))].sort();
             let allMatchedItems = rawData.filter(i => { 
                 if(!masterSearchText) return true; 
-                // ACTUALIZADO: INCLUYE UBICACION FISICA
                 return `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''} ${i['Ubicacion Fisica']||''}`.toLowerCase().includes(masterSearchText); 
             });
             let totalMatch = allMatchedItems.length; let totalVal = allMatchedItems.reduce((sum, i) => sum + getMarketValue(i), 0);
@@ -799,7 +806,6 @@
                 let matchedItems = rawData.filter(i => { 
                     if ((i.Familia || 'Sin Familia') !== f) return false; 
                     if(!masterSearchText) return true; 
-                    // ACTUALIZADO: INCLUYE UBICACION FISICA
                     return `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''} ${i['Ubicacion Fisica']||''}`.toLowerCase().includes(masterSearchText); 
                 });
                 let count = matchedItems.length; let val = matchedItems.reduce((sum, i) => sum + getMarketValue(i), 0);
@@ -813,13 +819,11 @@
         function resetMasterFiltersVariables() { 
             masterSearchText = ""; 
             document.getElementById('master-live-search').value = ""; 
-            // ACTUALIZADO: AÑADIDO FILTRO UBICACION
             masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "", 'Ubicacion Fisica': "" }; 
         }
         function resetMasterFilters() { resetMasterFiltersVariables(); renderTopFilters(); applyMasterTableFilters(); }
 
         function renderTopFilters() {
-            // ACTUALIZADO: AÑADIDO FILTRO UBICACION
             const columns = [
                 { id: 'Familia', label: 'Familia' }, 
                 { id: 'Categoria', label: 'Categoría' }, 
@@ -847,7 +851,6 @@
             let result = currentFilteredData.filter(i => {
                 let matchText = true; 
                 if (masterSearchText) { 
-                    // ACTUALIZADO: INCLUYE UBICACION FISICA
                     matchText = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''} ${i['Ubicacion Fisica']||''}`.toLowerCase().includes(masterSearchText); 
                 }
                 let mFam = !masterHeaderFilters.Familia || i.Familia === masterHeaderFilters.Familia; 
@@ -855,7 +858,7 @@
                 let mMar = !masterHeaderFilters.Marca || i.Marca === masterHeaderFilters.Marca; 
                 let mEst = !masterHeaderFilters.Estado || i.Estado === masterHeaderFilters.Estado;
                 let mSuc = !masterHeaderFilters['Sucursal Responsable'] || i['Sucursal Responsable'] === masterHeaderFilters['Sucursal Responsable'];
-                let mUbi = !masterHeaderFilters['Ubicacion Fisica'] || i['Ubicacion Fisica'] === masterHeaderFilters['Ubicacion Fisica']; // NUEVO FILTRO
+                let mUbi = !masterHeaderFilters['Ubicacion Fisica'] || i['Ubicacion Fisica'] === masterHeaderFilters['Ubicacion Fisica']; 
                 
                 return matchText && mFam && mCat && mMar && mEst && mSuc && mUbi;
             });
