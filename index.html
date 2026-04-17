@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIAF 2026 - BI & Inventario</title>
+    <title>SIAF 2026 - BI & Análisis Financiero</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -117,22 +117,36 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h2 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest border-b border-slate-200 pb-2"><i class="fa-solid fa-chart-pie mr-1"></i> Distribución Operativa (Cantidades)</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                 <div class="glass-card-chart p-6 group">
-                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-400 uppercase">Estado Operativo</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
+                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-500 uppercase">Estado Operativo</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
                     <div class="h-56"><canvas id="chartEstado"></canvas></div>
                 </div>
                 <div class="glass-card-chart p-6 group">
-                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-400 uppercase">Sucursal Responsable</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
+                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-500 uppercase">Inventario por Familia</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
+                    <div class="h-56"><canvas id="chartCat"></canvas></div>
+                </div>
+                <div class="glass-card-chart p-6 group">
+                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-500 uppercase">Sucursal Responsable</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
                     <div class="h-56"><canvas id="chartSucursal"></canvas></div>
                 </div>
                 <div class="glass-card-chart p-6 group">
-                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-400 uppercase">Top Bodegas / Ubicaciones</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
+                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-500 uppercase">Top Bodegas / Ubicaciones</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
                     <div class="h-56"><canvas id="chartFisica"></canvas></div>
                 </div>
-                <div class="glass-card-chart p-6 group">
-                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-400 uppercase">Inventario por Familia</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
-                    <div class="h-56"><canvas id="chartCat"></canvas></div>
+            </div>
+
+            <h2 class="text-xs font-black text-emerald-500 uppercase mb-4 tracking-widest border-b border-emerald-100 pb-2"><i class="fa-solid fa-chart-line mr-1"></i> Análisis Financiero (Valor de Mercado)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card-chart p-6 group border-t-2 border-t-emerald-400">
+                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-500 uppercase">Valorización por Familia</h3><span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
+                    <div class="h-64"><canvas id="chartValFam"></canvas></div>
+                </div>
+                <div class="glass-card-chart p-6 group border-t-2 border-t-emerald-400">
+                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-500 uppercase">Valorización por Sucursal</h3><span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
+                    <div class="h-64"><canvas id="chartValSuc"></canvas></div>
                 </div>
             </div>
         </section>
@@ -205,27 +219,49 @@
         let currentFilteredData = [];
         let chartInstances = {};
         
-        // --- NUEVAS VARIABLES GLOBALES DASHBOARD ---
         let dashboardFilteredData = [];
         let dashboardFilters = { Familia: "", 'Sucursal Responsable': "", Categoria: "" };
         
-        // Variables Globales Buscador Maestra
         let masterSearchText = "";
         let masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
         let currentSort = { column: 'ID', asc: true };
 
-        // --- UTILIDAD FINANCIERA ---
+        // --- LÓGICA FINANCIERA REPARADA Y BLINDADA ---
         function getMarketValue(item) {
-            // Busca la columna "Valor de Mercado Estimado", "Valor Mercado", etc.
-            let val = item['Valor de Mercado Estimado'] || item['Valor Mercado'] || item['Valor de Mercado'] || item['Valor Estimado'] || 0;
-            if(typeof val === 'string') val = val.replace(/[^0-9,-]+/g,"").replace(',','.');
-            return parseFloat(val) || 0;
+            let val = 0;
+            // 1. Busca coincidencias exactas comunes
+            const targetKeys = ['Valor de Mercado Estimado', 'Valor Mercado', 'Valor de Mercado', 'Valor Estimado', 'Valor'];
+            for (let k of targetKeys) {
+                if (item[k] !== undefined && item[k] !== "") { val = item[k]; break; }
+            }
+            
+            // 2. Si no lo encuentra, busca cualquier llave que contenga "valor" y "mercado"
+            if (!val) {
+                for (let k in item) {
+                    if (k.toLowerCase().includes('valor') && k.toLowerCase().includes('mercado')) {
+                        val = item[k]; break;
+                    }
+                }
+            }
+
+            if (!val) return 0;
+            
+            // 3. Parseo seguro de formatos chilenos y textos
+            if (typeof val === 'number') return val;
+            if (typeof val === 'string') {
+                // Elimina símbolos de peso y espacios
+                let cleanStr = val.replace(/\$|\s/g, '');
+                // Quita puntos de miles y cambia comas por puntos (ej: 1.500,50 -> 1500.50)
+                cleanStr = cleanStr.replace(/\./g, '').replace(',', '.');
+                return parseFloat(cleanStr) || 0;
+            }
+            return 0;
         }
 
         function formatCurrency(val) {
             let num = parseFloat(val);
             if (isNaN(num)) return val || '---';
-            return '$' + num.toLocaleString('es-CL');
+            return '$' + Math.round(num).toLocaleString('es-CL');
         }
 
         async function init() {
@@ -278,7 +314,7 @@
         }
 
         function updateDashboard() {
-            // 1. Filtrar Base según Dashboard Filters
+            // 1. Filtrar Base Dashboard
             dashboardFilteredData = rawData.filter(i => {
                 let matchF = !dashboardFilters.Familia || i.Familia === dashboardFilters.Familia;
                 let matchC = !dashboardFilters.Categoria || i.Categoria === dashboardFilters.Categoria;
@@ -286,18 +322,18 @@
                 return matchF && matchC && matchS;
             });
 
-            // 2. Actualizar KPIs Principales
+            // 2. KPIs
             document.getElementById('kpi-total').innerText = dashboardFilteredData.length;
             document.getElementById('kpi-op').innerText = dashboardFilteredData.filter(i => (i.Estado||'').includes("Operacion")).length;
             document.getElementById('kpi-maint').innerText = dashboardFilteredData.filter(i => (i.Estado||'').includes("Mantencion")).length;
             document.getElementById('kpi-risk').innerText = dashboardFilteredData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado || '')).length;
             
-            // 3. Actualizar KPI Financiero (Suma de Valor Mercado)
             const totalMercado = dashboardFilteredData.reduce((sum, i) => sum + getMarketValue(i), 0);
             document.getElementById('kpi-valor').innerText = formatCurrency(totalMercado);
             
-            // 4. Actualizar Gráficos
+            // 3. Gráficos Base
             if(chartInstances.estado) Object.values(chartInstances).forEach(c => c.destroy());
+            
             const gc = (k) => dashboardFilteredData.reduce((acc, i) => { let v = i[k] || i[k.toUpperCase()]; if(v) acc[v] = (acc[v]||0)+1; return acc; }, {});
             
             const estLabels = Object.keys(gc('Estado'));
@@ -333,6 +369,40 @@
                 options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}},
                 onClick: (e, el) => { if(el.length) openTableFromKPI('Familia: ' + famLabels[el[0].index], { Familia: famLabels[el[0].index] }); else openTableFromKPI('Todas las Familias', {}); }} 
             });
+
+            // 4. NUEVOS GRÁFICOS FINANCIEROS (Basados en sumas monetarias, no en cantidades)
+            const sumBy = (key) => dashboardFilteredData.reduce((acc, i) => {
+                let v = i[key] || 'Sin Asignar';
+                acc[v] = (acc[v] || 0) + getMarketValue(i);
+                return acc;
+            }, {});
+
+            // Valor por Familia
+            let valFamData = sumBy('Familia');
+            // Ordenar de mayor a menor valor
+            let sortedValFam = Object.entries(valFamData).sort((a,b)=>b[1]-a[1]);
+            
+            chartInstances.valFam = new Chart(document.getElementById('chartValFam'), {
+                type: 'bar',
+                data: { labels: sortedValFam.map(i=>i[0].substring(0,12)), datasets: [{ data: sortedValFam.map(i=>i[1]), backgroundColor: '#10b981', borderRadius: 4 }] },
+                options: {
+                    responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip: { callbacks: { label: function(c) { return formatCurrency(c.raw); } } } },
+                    scales:{x:{grid:{display:false}}},
+                    onClick: (e, el) => { if(el.length) openTableFromKPI('Familia: ' + sortedValFam[el[0].index][0], { Familia: sortedValFam[el[0].index][0] }); else openTableFromKPI('Todas las Familias', {}); }
+                }
+            });
+
+            // Valor por Sucursal
+            let valSucData = sumBy('Sucursal Responsable');
+            let sortedValSuc = Object.entries(valSucData).sort((a,b)=>b[1]-a[1]).slice(0,6); // Top 6
+            chartInstances.valSuc = new Chart(document.getElementById('chartValSuc'), {
+                type: 'doughnut',
+                data: { labels: sortedValSuc.map(i=>i[0]), datasets: [{ data: sortedValSuc.map(i=>i[1]), backgroundColor: ['#10b981','#34d399','#6ee7b7','#a7f3d0','#059669','#047857'] }] },
+                options: {
+                    responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'right', labels:{font:{size:9}}}, tooltip: { callbacks: { label: function(c) { return formatCurrency(c.raw); } } } },
+                    onClick: (e, el) => { if(el.length) openTableFromKPI('Sede: ' + sortedValSuc[el[0].index][0], { 'Sucursal Responsable': sortedValSuc[el[0].index][0] }); else openTableFromKPI('Todas las Sedes', {}); }
+                }
+            });
         }
 
         // --- SISTEMA NAVEGACIÓN ---
@@ -354,7 +424,7 @@
 
         function openTableFromKPI(title, query) {
             resetMasterFiltersVariables();
-            // Heredar filtros del Dashboard a la Tabla Maestra
+            // Heredar filtros del Dashboard
             let finalQuery = { ...query };
             if(dashboardFilters.Familia) finalQuery.Familia = dashboardFilters.Familia;
             if(dashboardFilters.Categoria) finalQuery.Categoria = dashboardFilters.Categoria;
@@ -437,7 +507,7 @@
                 let count = rawData.filter(i => {
                     if ((i.Familia || 'Sin Familia') !== f) return false;
                     if(!masterSearchText) return true;
-                    let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''}`.toLowerCase();
+                    let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''}`.toLowerCase();
                     return str.includes(masterSearchText);
                 }).length;
                 if (masterSearchText && count === 0) return;
@@ -545,8 +615,8 @@
                     <td class="text-xs text-slate-400 font-bold pl-4">${i.Familia || '---'}</td>
                     <td class="text-xs text-slate-500 font-bold">${i.Categoria || '---'}</td>
                     <td class="font-semibold text-slate-700">${i.Marca || 'Genérico'}</td>
-                    <td class="font-bold text-slate-900">${i.Modelo || i['MODELO/Nombre']}</td>
-                    <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || i['N° SERIE']}</td>
+                    <td class="font-bold text-slate-900">${i.Modelo || i['MODELO/Nombre'] || '---'}</td>
+                    <td class="font-mono text-xs text-indigo-600">${i['N Serie'] || i['N° SERIE'] || '---'}</td>
                     <td class="font-bold text-emerald-600">${formatCurrency(getMarketValue(i))}</td>
                     <td><span class="text-[9px] font-bold px-2 py-1 rounded-full ${(i.Estado||'').includes('Operacion') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${i.Estado || '---'}</span></td>
                     <td class="text-xs font-semibold text-slate-600">${i['Sucursal Responsable'] || '---'}</td>
