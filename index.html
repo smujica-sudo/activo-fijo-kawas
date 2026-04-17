@@ -25,7 +25,7 @@
         .breadcrumb-link { cursor: pointer; transition: color 0.2s; }
         .breadcrumb-link:hover { color: white; text-decoration: underline; }
 
-        .table-container { overflow-x: auto; overflow-y: auto; max-height: 70vh; background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .table-container { overflow-x: auto; overflow-y: auto; max-height: 65vh; background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .data-table { width: 100%; text-align: left; border-collapse: separate; border-spacing: 0; min-width: 900px; }
         .data-table thead { position: sticky; top: 0; z-index: 20; }
         .data-table th.sortable { background-color: #f8fafc; padding: 1rem 0.5rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 800; cursor: pointer; user-select: none; transition: background 0.2s; border-bottom: 2px solid #e2e8f0; }
@@ -126,7 +126,7 @@
             <div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
                     <h2 id="title-master-table" class="text-2xl font-black text-slate-800 uppercase mb-1 text-indigo-700"></h2>
-                    <p class="text-xs font-bold text-slate-400">Utilice el panel lateral para refinar su búsqueda.</p>
+                    <p class="text-xs font-bold text-slate-400">Utilice el buscador predictivo y los filtros laterales para refinar su búsqueda.</p>
                 </div>
             </div>
 
@@ -135,14 +135,6 @@
                 <aside class="w-full lg:w-64 flex-shrink-0">
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:sticky lg:top-24">
                         <h3 class="text-sm font-black text-slate-700 uppercase mb-4 flex items-center gap-2 border-b border-slate-100 pb-3"><i class="fa-solid fa-filter text-indigo-500"></i> Panel de Filtros</h3>
-
-                        <div class="mb-4">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Buscar por texto</label>
-                            <div class="relative">
-                                <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                                <input type="text" id="master-live-search" onkeyup="handleLiveSearch(this.value)" placeholder="Modelo, serie..." class="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-indigo-500 font-semibold text-slate-700">
-                            </div>
-                        </div>
 
                         <div class="space-y-4">
                             <div id="filter-container-Categoria"></div>
@@ -157,7 +149,13 @@
                     </div>
                 </aside>
 
-                <div class="flex-grow overflow-hidden">
+                <div class="flex-grow overflow-hidden flex flex-col">
+                    
+                    <div class="relative mb-4">
+                        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 text-lg"></i>
+                        <input type="text" id="master-live-search" onkeyup="handleLiveSearch(this.value)" placeholder="Buscar por Modelo, Serie, Marca..." class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-500 font-semibold text-slate-700 shadow-sm transition-all">
+                    </div>
+
                     <div id="table-master-container" class="table-container shadow-lg border-t-4 border-indigo-500 bg-white"></div>
                 </div>
 
@@ -189,7 +187,7 @@
         let currentFilteredData = [];
         let chartInstances = {};
         
-        // Variables Globales de Filtros de Sidebar
+        // Variables Globales de Filtros
         let masterSearchText = "";
         let masterHeaderFilters = { Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
         let currentSort = { column: 'ID', asc: true };
@@ -270,8 +268,8 @@
             else if (current.view === 'categories') { document.getElementById('title-categories').innerText = current.title; renderCategoriesGrid(); }
             else if (current.view === 'search-table') { 
                 document.getElementById('title-master-table').innerText = current.title; 
-                renderSidebarFilters(); // Dibuja los selects del sidebar
-                applyMasterTableFilters(); // Dibuja la tabla
+                renderSidebarFilters(); 
+                applyMasterTableFilters(); 
             }
             else if (current.view === 'detail') { renderDetail(); }
             else if (current.view === 'search-families') { renderSearchFamilies(); }
@@ -456,7 +454,6 @@
         function drawMasterTable(list) {
             const container = document.getElementById('table-master-container');
             
-            // TABLA LIMPIA (Sin selectores en thead)
             let html = `
                 <table class="data-table">
                     <thead>
