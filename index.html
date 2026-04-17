@@ -73,4 +73,185 @@
         <section id="view-dashboard" class="view-section active">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div onclick="startNav('Inventario General', {})" class="glass-card p-5 border-l-4 border-indigo-600 bg-indigo-50">
-                    <div class="flex
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-indigo-800 uppercase">Inventario</p><i class="fa-solid fa-folder-tree text-indigo-400"></i></div>
+                    <div id="kpi-total" class="text-3xl font-black text-indigo-900 mt-1">---</div>
+                    <p class="text-[9px] text-indigo-600 font-bold mt-2 tracking-wide">NAVEGAR POR FAMILIA ›</p>
+                </div>
+                <div onclick="openTableFromKPI('Operación', {Estado: 'Uso Operacion'})" class="glass-card p-5 border-l-4 border-emerald-500">
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-bold text-slate-400 uppercase">Operación</p><i class="fa-solid fa-circle-check text-emerald-200"></i></div>
+                    <div id="kpi-op" class="text-3xl font-black text-emerald-600 mt-1">---</div>
+                </div>
+                <div onclick="openTableFromKPI('Mantención', {Estado: 'En Mantencion'})" class="glass-card p-5 border-l-4 border-amber-500">
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-bold text-slate-400 uppercase">Mantención</p><i class="fa-solid fa-screwdriver-wrench text-amber-200"></i></div>
+                    <div id="kpi-maint" class="text-3xl font-black text-amber-500 mt-1">---</div>
+                </div>
+                <div onclick="openTableFromKPI('En Riesgo', {Riesgo: true})" class="glass-card p-5 border-l-4 border-rose-500">
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-bold text-slate-400 uppercase">En Riesgo</p><i class="fa-solid fa-triangle-exclamation text-rose-200"></i></div>
+                    <div id="kpi-risk" class="text-3xl font-black text-rose-500 mt-1">---</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card-chart p-6 group">
+                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-400 uppercase">Estado Operativo</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
+                    <div class="h-56"><canvas id="chartEstado"></canvas></div>
+                </div>
+                <div class="glass-card-chart p-6 group">
+                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-400 uppercase">Sucursal Responsable</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
+                    <div class="h-56"><canvas id="chartSucursal"></canvas></div>
+                </div>
+                <div class="glass-card-chart p-6 group">
+                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-400 uppercase">Top Bodegas / Ubicaciones</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
+                    <div class="h-56"><canvas id="chartFisica"></canvas></div>
+                </div>
+                <div class="glass-card-chart p-6 group">
+                    <div class="flex justify-between items-start mb-4"><h3 class="text-xs font-bold text-slate-400 uppercase">Inventario por Familia</h3><span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
+                    <div class="h-56"><canvas id="chartCat"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-search-families" class="view-section">
+            <h2 class="text-2xl font-black text-slate-800 uppercase mb-1">Buscador Maestro</h2>
+            <p class="text-xs font-bold text-slate-400 mb-6 tracking-wide">Escriba para filtrar la base completa, o seleccione directamente una Familia.</p>
+            <div class="relative max-w-3xl mb-8">
+                <i class="fa-solid fa-search absolute left-5 top-1/2 -translate-y-1/2 text-indigo-500 text-lg"></i>
+                <input type="text" id="pre-live-search" onkeyup="handlePreLiveSearch(this.value)" placeholder="Escriba material, modelo, serie o categoría..." class="filter-input pl-12 font-semibold text-slate-700 bg-white border-2 border-indigo-200 focus:border-indigo-500 shadow-md">
+            </div>
+            <div id="grid-search-families" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="view-search-table" class="view-section">
+            
+            <div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h2 id="title-master-table" class="text-2xl font-black text-slate-800 uppercase mb-1 text-indigo-700"></h2>
+                    <p class="text-xs font-bold text-slate-400">Utilice el buscador predictivo y los filtros laterales para refinar su búsqueda.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-6">
+                
+                <aside class="w-full lg:w-64 flex-shrink-0">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:sticky lg:top-24">
+                        <h3 class="text-sm font-black text-slate-700 uppercase mb-4 flex items-center gap-2 border-b border-slate-100 pb-3"><i class="fa-solid fa-filter text-indigo-500"></i> Panel de Filtros</h3>
+
+                        <div class="space-y-4">
+                            <div id="filter-container-Familia"></div>
+                            <div id="filter-container-Categoria"></div>
+                            <div id="filter-container-Marca"></div>
+                            <div id="filter-container-Estado"></div>
+                            <div id="filter-container-Sucursal Responsable"></div>
+                        </div>
+
+                        <button onclick="resetMasterFilters()" class="mt-6 w-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold py-3 rounded-lg transition-colors flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-eraser"></i> Limpiar Filtros
+                        </button>
+                    </div>
+                </aside>
+
+                <div class="flex-grow overflow-hidden flex flex-col">
+                    
+                    <div class="relative mb-4">
+                        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 text-lg"></i>
+                        <input type="text" id="master-live-search" onkeyup="handleLiveSearch(this.value)" placeholder="Buscar por Modelo, Serie, Marca..." class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-500 font-semibold text-slate-700 shadow-sm transition-all">
+                    </div>
+
+                    <div id="table-master-container" class="table-container shadow-lg border-t-4 border-indigo-500 bg-white"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="view-families" class="view-section">
+            <h2 id="title-families" class="text-2xl font-black text-slate-800 uppercase mb-1"></h2>
+            <p class="text-xs font-bold text-slate-400 mb-6 tracking-wide" id="subtitle-families">Seleccione una familia para explorar.</p>
+            <div id="grid-families" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="view-categories" class="view-section">
+            <h2 id="title-categories" class="text-2xl font-black text-slate-800 uppercase mb-6"></h2>
+            <div id="grid-categories" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="view-detail" class="view-section">
+            <div id="item-ficha" class="max-w-4xl mx-auto"></div>
+        </section>
+
+    </main>
+
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycby36cA1fdHcHZBlq3ZXh65qXzgX_c1ujI-c296gMt3e_SfzPA3tC6Mqu55DAmFeJvwj/exec'; 
+        
+        let rawData = [];
+        let navStack = []; 
+        let currentFilteredData = [];
+        let chartInstances = {};
+        
+        let masterSearchText = "";
+        let masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
+        let currentSort = { column: 'ID', asc: true };
+
+        async function init() {
+            await forceSync(false); 
+        }
+
+        async function forceSync(manual = true) {
+            const syncIcon = document.getElementById('sync-icon');
+            if (manual) syncIcon.classList.add('fa-spin'); 
+
+            try {
+                const res = await fetch(API_URL);
+                rawData = await res.json();
+                document.getElementById('items-count').innerText = rawData.length;
+                updateDashboard();
+                if (navStack.length > 0) processNavState(); 
+            } catch (e) { 
+                console.error("Error API:", e);
+                if (manual) alert("Error al sincronizar con la base de datos.");
+            } finally {
+                if (manual) syncIcon.classList.remove('fa-spin');
+            }
+        }
+
+        // --- SISTEMA DE NAVEGACIÓN ---
+        function popNav(index) {
+            if (index === -1) {
+                navStack = []; 
+                document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+                document.getElementById('view-dashboard').classList.add('active');
+                document.getElementById('breadcrumb-path').innerHTML = `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="popNav(-1)">Home</span></span>`;
+                window.scrollTo(0,0);
+                return;
+            }
+            navStack = navStack.slice(0, index + 1);
+            processNavState();
+        }
+
+        function startNav(title, query) { navStack = [{ title, query, view: 'families', isMasterSearch: false }]; processNavState(); }
+        function pushNav(title, query, view) { navStack.push({ title, query: { ...navStack[navStack.length-1].query, ...query }, view }); processNavState(); }
+
+        function openTableFromKPI(title, query) {
+            resetMasterFiltersVariables();
+            navStack = [
+                { title: 'Buscador', query: {}, view: 'search-families', isMasterSearch: true },
+                { title: title, query: query, view: 'search-table' }
+            ];
+            processNavState();
+        }
+
+        function processNavState() {
+            if (navStack.length === 0) return;
+            let current = navStack[navStack.length - 1];
+            
+            currentFilteredData = rawData.filter(item => {
+                for (let key in current.query) {
+                    if (key === 'Riesgo') { if (!["Perdido", "Vendido", "Pendiente"].includes(item.Estado)) return false; } 
+                    else if (item[key] !== current.query[key]) return false;
+                } return true;
+            });
+
+            let breadHtml = `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="popNav(-1)">Home</span></span>`;
+            navStack.forEach((step, idx) => {
+                breadHtml += `<span class="breadcrumb-item ${idx === navStack.length - 1 ? 'text-white' : ''}">
+                    <span class="${idx !== navStack.length - 1 ? '
