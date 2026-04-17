@@ -94,19 +94,12 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div onclick="openMasterSearch()" class="glass-card p-5 border-l-4 border-indigo-600 bg-indigo-50">
-                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-indigo-800 uppercase">Activos</p><i class="fa-solid fa-folder-tree text-indigo-400"></i></div>
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-indigo-800 uppercase">Activos Totales</p><i class="fa-solid fa-folder-tree text-indigo-400"></i></div>
                     <div id="kpi-total" class="text-3xl font-black text-indigo-900 mt-1">---</div>
                     <p class="text-[9px] text-indigo-600 font-bold mt-2 tracking-wide">BUSCADOR MAESTRO ›</p>
                 </div>
-                
-                <div class="glass-card-static p-5 border-l-4 border-slate-800 bg-slate-900 text-white">
-                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-slate-300 uppercase">Valor de Mercado</p><i class="fa-solid fa-sack-dollar text-slate-500"></i></div>
-                    <div id="kpi-valor" class="text-xl md:text-2xl font-black mt-2 leading-tight tracking-tight text-emerald-400">---</div>
-                    <p class="text-[9px] text-slate-400 font-bold mt-2 tracking-wide">ESTIMADO TOTAL</p>
-                </div>
-
                 <div onclick="openTableFromKPI('Operación', {Estado: 'Uso Operacion'})" class="glass-card p-5 border-l-4 border-emerald-500">
                     <div class="flex justify-between items-start"><p class="text-[10px] font-bold text-slate-400 uppercase">Operación</p><i class="fa-solid fa-circle-check text-emerald-200"></i></div>
                     <div id="kpi-op" class="text-3xl font-black text-emerald-600 mt-1">---</div>
@@ -118,39 +111,6 @@
                 <div onclick="openTableFromKPI('En Riesgo', {Riesgo: true})" class="glass-card p-5 border-l-4 border-rose-500">
                     <div class="flex justify-between items-start"><p class="text-[10px] font-bold text-slate-400 uppercase">En Riesgo</p><i class="fa-solid fa-triangle-exclamation text-rose-200"></i></div>
                     <div id="kpi-risk" class="text-3xl font-black text-rose-500 mt-1">---</div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <div onclick="openTableFromKPI('Activos en Arriendo', {Contrato: 'arriendo'})" class="glass-card p-5 border-l-4 border-cyan-500 transition-colors hover:bg-cyan-50">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-[10px] font-black text-cyan-700 uppercase flex items-center gap-2"><i class="fa-solid fa-file-contract"></i> Contrato: Arriendo</p>
-                            <div class="flex items-baseline gap-2 mt-1">
-                                <span id="kpi-arr-count" class="text-3xl font-black text-cyan-900">---</span>
-                                <span class="text-[10px] font-bold text-cyan-600 uppercase">Activos</span>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">Valorización</p>
-                            <span id="kpi-arr-val" class="text-lg md:text-xl font-black text-emerald-600">---</span>
-                        </div>
-                    </div>
-                </div>
-                <div onclick="openTableFromKPI('Activos en Comodato', {Contrato: 'comodato'})" class="glass-card p-5 border-l-4 border-violet-500 transition-colors hover:bg-violet-50">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-[10px] font-black text-violet-700 uppercase flex items-center gap-2"><i class="fa-solid fa-handshake"></i> Contrato: Comodato</p>
-                            <div class="flex items-baseline gap-2 mt-1">
-                                <span id="kpi-com-count" class="text-3xl font-black text-violet-900">---</span>
-                                <span class="text-[10px] font-bold text-violet-600 uppercase">Activos</span>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">Valorización</p>
-                            <span id="kpi-com-val" class="text-lg md:text-xl font-black text-emerald-600">---</span>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -178,15 +138,67 @@
                 </div>
             </div>
 
-            <h2 class="text-xs font-black text-emerald-500 uppercase mb-4 tracking-widest border-b border-emerald-100 pb-2"><i class="fa-solid fa-chart-line mr-1"></i> Análisis Financiero (Valor de Mercado)</h2>
+            <h2 class="text-xs font-black text-emerald-500 uppercase mb-4 tracking-widest border-b border-emerald-100 pb-2"><i class="fa-solid fa-sack-dollar mr-1"></i> Análisis Financiero (Valorización y Retorno)</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="glass-card-static p-5 border-l-4 border-slate-800 bg-slate-900 text-white">
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-slate-400 uppercase">Valor Mercado Total</p><i class="fa-solid fa-vault text-slate-600"></i></div>
+                    <div id="kpi-valor" class="text-2xl font-black mt-2 leading-tight tracking-tight text-emerald-400">---</div>
+                    <p class="text-[9px] text-slate-500 font-bold mt-2 tracking-wide">ACTIVOS EN PANTALLA</p>
+                </div>
+                <div class="glass-card-static p-5 border-l-4 border-emerald-400 bg-emerald-50">
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-emerald-800 uppercase">Ingreso Mensual Est.</p><i class="fa-solid fa-hand-holding-dollar text-emerald-300"></i></div>
+                    <div id="kpi-revenue" class="text-2xl font-black mt-2 leading-tight tracking-tight text-emerald-700">---</div>
+                    <p class="text-[9px] text-emerald-600 font-bold mt-2 tracking-wide">SOLO ACTIVOS EN ARRIENDO</p>
+                </div>
+                <div class="glass-card-static p-5 border-l-4 border-blue-500 bg-blue-50">
+                    <div class="flex justify-between items-start"><p class="text-[10px] font-black text-blue-800 uppercase">ROA Bruto Anual</p><i class="fa-solid fa-percent text-blue-300"></i></div>
+                    <div id="kpi-roa" class="text-2xl font-black mt-2 leading-tight tracking-tight text-blue-700">---</div>
+                    <p class="text-[9px] text-blue-600 font-bold mt-2 tracking-wide">RETORNO SOBRE ACTIVOS</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div onclick="openTableFromKPI('Activos en Arriendo', {Contrato: 'arriendo'})" class="glass-card p-5 border-l-4 border-cyan-500 transition-colors hover:bg-cyan-50">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[10px] font-black text-cyan-700 uppercase flex items-center gap-2"><i class="fa-solid fa-file-contract"></i> Contrato: Arriendo</p>
+                            <div class="flex items-baseline gap-2 mt-1">
+                                <span id="kpi-arr-count" class="text-3xl font-black text-cyan-900">---</span>
+                                <span class="text-[10px] font-bold text-cyan-600 uppercase">Activos</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Valor inmovilizado</p>
+                            <span id="kpi-arr-val" class="text-lg md:text-xl font-black text-emerald-600">---</span>
+                        </div>
+                    </div>
+                </div>
+                <div onclick="openTableFromKPI('Activos en Comodato', {Contrato: 'comodato'})" class="glass-card p-5 border-l-4 border-violet-500 transition-colors hover:bg-violet-50">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[10px] font-black text-violet-700 uppercase flex items-center gap-2"><i class="fa-solid fa-handshake"></i> Contrato: Comodato</p>
+                            <div class="flex items-baseline gap-2 mt-1">
+                                <span id="kpi-com-count" class="text-3xl font-black text-violet-900">---</span>
+                                <span class="text-[10px] font-bold text-violet-600 uppercase">Activos</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Valor Inmovilizado</p>
+                            <span id="kpi-com-val" class="text-lg md:text-xl font-black text-emerald-600">---</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass-card-static p-5 flex flex-col group border-t-2 border-t-emerald-400">
-                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-emerald-300"></i> Valorización por Familia</h3><span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
+                <div class="glass-card-static p-6 flex flex-col group border-t-2 border-t-emerald-400">
+                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-emerald-300"></i> Valorización por Familia</h3><span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span></div>
                     <div class="grid grid-cols-2 gap-2 mb-3"><select id="flt-valFam-suc" onchange="updateLocalChart('valFam')" class="chart-select border-emerald-100"><option value="">-- Sucursal --</option></select><select id="flt-valFam-est" onchange="updateLocalChart('valFam')" class="chart-select border-emerald-100"><option value="">-- Estado --</option></select></div>
                     <div class="h-64 relative cursor-pointer"><canvas id="chartValFam"></canvas></div>
                 </div>
-                <div class="glass-card-static p-5 flex flex-col group border-t-2 border-t-emerald-400">
-                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-emerald-300"></i> Valorización por Sucursal</h3><span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span></div>
+                <div class="glass-card-static p-6 flex flex-col group border-t-2 border-t-emerald-400">
+                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-emerald-300"></i> Valorización por Sucursal</h3><span class="text-[9px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">GRÁFICO NAVEGABLE ›</span></div>
                     <div class="grid grid-cols-2 gap-2 mb-3"><select id="flt-valSuc-fam" onchange="updateLocalChart('valSuc')" class="chart-select border-emerald-100"><option value="">-- Familia --</option></select><select id="flt-valSuc-est" onchange="updateLocalChart('valSuc')" class="chart-select border-emerald-100"><option value="">-- Estado --</option></select></div>
                     <div class="h-64 relative cursor-pointer"><canvas id="chartValSuc"></canvas></div>
                 </div>
@@ -239,6 +251,7 @@
 
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycby36cA1fdHcHZBlq3ZXh65qXzgX_c1ujI-c296gMt3e_SfzPA3tC6Mqu55DAmFeJvwj/exec'; 
+        const VALOR_UF = 39500; // PRECIO ESTIMADO UF EN CLP
         
         let rawData = [];
         let navStack = []; 
@@ -252,7 +265,7 @@
         let masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
         let currentSort = { column: 'ID', asc: true };
 
-        // --- SISTEMA FINANCIERO ---
+        // --- FUNCIONES FINANCIERAS ---
         function getMarketValue(item) {
             let val = 0;
             const targetKeys = ['Valor de Mercado Estimado', 'Valor Mercado', 'Valor de Mercado', 'Valor Estimado', 'Valor'];
@@ -299,7 +312,7 @@
             }
         }
 
-        // --- SISTEMA DASHBOARD MODULAR ---
+        // --- DASHBOARD BI Y CÁLCULOS ROA ---
         function initDashboardFilters() {
             const buildOpts = (key, id) => {
                 const el = document.getElementById(id);
@@ -335,15 +348,17 @@
                 return matchF && matchC && matchS;
             });
             
+            // KPIs Operativos Base
             document.getElementById('kpi-total').innerText = dashboardFilteredData.length;
             document.getElementById('kpi-op').innerText = dashboardFilteredData.filter(i => (i.Estado||'').includes("Operacion")).length;
             document.getElementById('kpi-maint').innerText = dashboardFilteredData.filter(i => (i.Estado||'').includes("Mantencion")).length;
             document.getElementById('kpi-risk').innerText = dashboardFilteredData.filter(i => ["Perdido", "Vendido", "Pendiente"].includes(i.Estado || '')).length;
             
+            // Cálculos Financieros y de Contratos
             const totalMercado = dashboardFilteredData.reduce((sum, i) => sum + getMarketValue(i), 0);
             document.getElementById('kpi-valor').innerText = formatCurrency(totalMercado);
 
-            // NUEVO: Cálculos para Arriendo y Comodato
+            // Arriendo y Comodato
             const arrItems = dashboardFilteredData.filter(i => (i.Contrato || i.CONTRATO || '').toLowerCase().includes('arriendo'));
             const comItems = dashboardFilteredData.filter(i => (i.Contrato || i.CONTRATO || '').toLowerCase().includes('comodato'));
 
@@ -352,9 +367,27 @@
             document.getElementById('kpi-com-count').innerText = comItems.length;
             document.getElementById('kpi-com-val').innerText = formatCurrency(comItems.reduce((sum, i) => sum + getMarketValue(i), 0));
 
+            // NUEVO: CÁLCULO DE INGRESOS Y ROA
+            let ingresoMensualArriendos = 0;
+            arrItems.forEach(i => {
+                let textToSearch = `${i.Categoria||''} ${i.Familia||''} ${i.Modelo||''} ${i['MODELO/Nombre']||''}`.toLowerCase();
+                if(textToSearch.includes('espresso') || textToSearch.includes('máquina') || textToSearch.includes('maquina')) {
+                    ingresoMensualArriendos += (5 * VALOR_UF);
+                } else if(textToSearch.includes('molino')) {
+                    ingresoMensualArriendos += (1.5 * VALOR_UF);
+                }
+            });
+
+            let ingresoAnualEstimado = ingresoMensualArriendos * 12;
+            let roa = totalMercado > 0 ? ((ingresoAnualEstimado / totalMercado) * 100).toFixed(1) : 0;
+
+            document.getElementById('kpi-revenue').innerText = formatCurrency(ingresoMensualArriendos);
+            document.getElementById('kpi-roa').innerText = roa + '%';
+
             updateAllLocalCharts();
         }
 
+        // --- GRÁFICOS LOCALES ---
         function initLocalChartFilters() {
             const popSelect = (id, key) => {
                 const el = document.getElementById(id);
@@ -489,7 +522,7 @@
             if (navStack.length === 0) return;
             let current = navStack[navStack.length - 1];
             
-            // ACTUALIZADO: Manejo flexible de búsqueda para la columna Contrato
+            // FIltrado con Match Flexible para Contratos
             currentFilteredData = rawData.filter(item => {
                 for (let key in current.query) {
                     if (key === 'Riesgo') { 
@@ -580,7 +613,6 @@
             pushNav(title, queryObj, 'search-table');
         }
 
-        // --- FILTROS SUPERIORES TABLA MAESTRA ---
         function renderTopFilters() {
             const columns = [
                 { id: 'Familia', label: 'Familia' },
