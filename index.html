@@ -303,8 +303,16 @@
         }
 
         function goToMasterTable(familia, title) {
+            // Sincroniza la barra de búsqueda de la tabla
             document.getElementById('master-live-search').value = masterSearchText;
-            pushNav(title, { Familia: familia }, 'search-table');
+            
+            // CORRECCIÓN: Si es búsqueda global (familia viene vacía), no aplicamos filtro de familia
+            let queryObj = {};
+            if (familia !== '') {
+                queryObj = { Familia: familia };
+            }
+            
+            pushNav(title, queryObj, 'search-table');
         }
 
         function handleLiveSearch(val) {
@@ -323,11 +331,12 @@
             applyMasterTableFilters();
         }
 
-        function applyMasterTableFilters() {
+       function applyMasterTableFilters() {
             let result = currentFilteredData.filter(i => {
                 let matchText = true;
                 if (masterSearchText) {
-                    let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''}`.toLowerCase();
+                    // CORRECCIÓN: Incluimos también la "Familia" en la cadena de texto para la búsqueda global
+                    let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''}`.toLowerCase();
                     matchText = str.includes(masterSearchText);
                 }
                 
@@ -349,7 +358,6 @@
 
             drawMasterTable(result);
         }
-
         function buildHeaderSelect(column) {
             let options = [...new Set(currentFilteredData.map(i => i[column] || '').filter(Boolean))].sort();
             let currentVal = masterHeaderFilters[column] || "";
