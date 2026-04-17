@@ -55,6 +55,9 @@
         .chart-select { width: 100%; padding: 0.25rem 0.5rem; font-size: 0.6rem; text-transform: uppercase; border: 1px solid #e2e8f0; border-radius: 0.375rem; background: #f8fafc; outline: none; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s; }
         .chart-select:hover { border-color: #cbd5e1; background: white; }
         .chart-select:focus { border-color: #6366f1; color: #4f46e5; }
+        
+        /* Pequeño indicador de carga silenciosa */
+        #bg-sync-indicator { transition: opacity 0.3s; }
     </style>
 </head>
 <body class="text-slate-900 relative">
@@ -64,13 +67,14 @@
             <div class="flex items-center gap-3 cursor-pointer" onclick="popNav(-1)">
                 <i class="fa-solid fa-boxes-stacked text-xl"></i>
                 <h1 class="font-extrabold text-lg tracking-tight uppercase hidden lg:block">Control Activo Fijo</h1>
+                <i id="bg-sync-indicator" class="fa-solid fa-cloud-arrow-up text-xs opacity-0" title="Sincronizando en segundo plano..."></i>
             </div>
             
             <div class="flex items-center gap-2 sm:gap-3">
                 <button onclick="openAddForm()" class="bg-emerald-500 hover:bg-emerald-400 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-inner flex items-center gap-2 border border-emerald-400/50" title="Agregar Nuevo Activo">
                     <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">NUEVO</span>
                 </button>
-                <button onclick="forceSync()" class="bg-indigo-800 hover:bg-indigo-900 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-inner flex items-center gap-2 border border-indigo-500/50" title="Actualizar datos">
+                <button onclick="forceSync(true)" class="bg-indigo-800 hover:bg-indigo-900 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-inner flex items-center gap-2 border border-indigo-500/50" title="Forzar actualización de datos">
                     <i id="sync-icon" class="fa-solid fa-rotate-right"></i> <span class="hidden md:inline">SYNC</span>
                 </button>
                 <button onclick="openMasterSearch()" class="bg-indigo-500 hover:bg-indigo-400 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-inner flex items-center gap-2">
@@ -351,19 +355,51 @@
             return '$' + Math.round(num).toLocaleString('es-CL'); 
         }
 
-        // --- INICIALIZACIÓN Y CONEXIÓN API ---
-        async function init() { await forceSync(false); }
+        // --- INICIALIZACIÓN Y CONEXIÓN API (STALE-WHILE-REVALIDATE) ---
+        async function init() { 
+            // 1. Intentar cargar desde localStorage rápido
+            const cachedData = localStorage.getItem('siaf_rawData');
+            if (cachedData) {
+                try {
+                    rawData = JSON.parse(cachedData);
+                    const countEl = document.getElementById('items-count');
+                    if (countEl) countEl.innerText = rawData.length;
+                    
+                    initDashboardFilters(); 
+                    initLocalChartFilters(); 
+                    updateDashboard();
+                    if (currentNavIndex > -1) processNavState(); 
+                } catch (e) {
+                    console.error("Error leyendo caché", e);
+                }
+            }
+            
+            // 2. Traer datos frescos silenciosamente en segundo plano
+            await forceSync(false); 
+        }
 
         async function forceSync(manual = true) {
             const syncIcon = document.getElementById('sync-icon'); 
-            if (manual) syncIcon.classList.add('fa-spin'); 
+            const bgIndicator = document.getElementById('bg-sync-indicator');
+            
+            if (manual) {
+                syncIcon.classList.add('fa-spin'); 
+            } else {
+                bgIndicator.classList.remove('opacity-0');
+            }
+
             try {
                 const res = await fetch(API_URL); 
-                rawData = await res.json();
+                const freshData = await res.json();
+                
+                // Actualizar variable global y memoria del navegador
+                rawData = freshData;
+                localStorage.setItem('siaf_rawData', JSON.stringify(rawData));
                 
                 const countEl = document.getElementById('items-count');
                 if (countEl) countEl.innerText = rawData.length;
                 
+                // Redibujar UI con datos frescos
                 initDashboardFilters(); 
                 initLocalChartFilters(); 
                 updateDashboard();
@@ -372,7 +408,11 @@
                 console.error("Error API:", e); 
                 if (manual) alert("Error al sincronizar con la base de datos."); 
             } finally { 
-                if (manual) syncIcon.classList.remove('fa-spin'); 
+                if (manual) {
+                    syncIcon.classList.remove('fa-spin'); 
+                } else {
+                    bgIndicator.classList.add('opacity-0');
+                }
             }
         }
 
@@ -799,7 +839,6 @@
         function drawMasterTable(list) {
             const container = document.getElementById('table-master-container');
             
-            // --- NUEVO: COLUMNA UBICACIÓN FÍSICA AÑADIDA ---
             let html = `<table class="data-table"><thead><tr>
                 <th class="sortable pl-4" onclick="sortMasterTable('Familia')">Familia ${getSortIcon('Familia')}</th>
                 <th class="sortable" onclick="sortMasterTable('Categoria')">Categoría ${getSortIcon('Categoria')}</th>
