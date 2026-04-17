@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIAF 2026 - Inventario Inteligente</title>
+    <title>SIAF 2026 - Dashboard Interactivo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,7 +16,10 @@
         
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; transition: all 0.2s; cursor: pointer; }
         .glass-card:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .glass-card-static { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; }
+        
+        /* Modificado para que las tarjetas de gráficos sean interactivas al hover */
+        .glass-card-chart { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; transition: all 0.2s; cursor: pointer; }
+        .glass-card-chart:hover { border-color: #6366f1; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
         
         .breadcrumb-item::after { content: '›'; margin: 0 8px; color: #818cf8; font-weight: 400; }
         .breadcrumb-item:last-child::after { content: ''; }
@@ -74,6 +77,7 @@
     <main class="container mx-auto px-4 py-6">
 
         <section id="view-dashboard" class="view-section active">
+            
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div onclick="startNav('Inventario General', {})" class="glass-card p-5 border-l-4 border-indigo-600 bg-indigo-50">
                     <div class="flex justify-between items-start"><p class="text-[10px] font-black text-indigo-800 uppercase">Inventario</p><i class="fa-solid fa-folder-tree text-indigo-400"></i></div>
@@ -95,40 +99,52 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass-card-static p-6 hover:border-indigo-500 transition-colors cursor-pointer" title="Toque una barra para explorar">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Estado Operativo</h3>
+                
+                <div class="glass-card-chart p-6 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase">Estado Operativo</h3>
+                        <span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span>
+                    </div>
                     <div class="h-56"><canvas id="chartEstado"></canvas></div>
                 </div>
-                <div class="glass-card-static p-6 hover:border-indigo-500 transition-colors cursor-pointer" title="Toque para explorar">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Sucursal Responsable</h3>
+                
+                <div class="glass-card-chart p-6 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase">Sucursal Responsable</h3>
+                        <span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span>
+                    </div>
                     <div class="h-56"><canvas id="chartSucursal"></canvas></div>
                 </div>
-                <div class="glass-card-static p-6 hover:border-indigo-500 transition-colors cursor-pointer" title="Toque para explorar">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Top Bodegas / Ubicaciones</h3>
+                
+                <div class="glass-card-chart p-6 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase">Top Bodegas / Ubicaciones</h3>
+                        <span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span>
+                    </div>
                     <div class="h-56"><canvas id="chartFisica"></canvas></div>
                 </div>
-                <div class="glass-card-static p-6 hover:border-indigo-500 transition-colors cursor-pointer" title="Toque para explorar">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Inventario por Familia</h3>
+                
+                <div class="glass-card-chart p-6 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase">Inventario por Familia</h3>
+                        <span class="text-[9px] font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">TOCAR GRÁFICO ›</span>
+                    </div>
                     <div class="h-56"><canvas id="chartCat"></canvas></div>
                 </div>
+
             </div>
         </section>
 
-        <section id="view-families" class="view-section">
-            <h2 id="title-families" class="text-2xl font-black text-slate-800 uppercase mb-1"></h2>
-            <p class="text-xs font-bold text-slate-400 mb-6 tracking-wide" id="subtitle-families">Seleccione una familia para explorar.</p>
+        <section id="view-search-families" class="view-section">
+            <h2 class="text-2xl font-black text-slate-800 uppercase mb-1">Buscador Maestro</h2>
+            <p class="text-xs font-bold text-slate-400 mb-6 tracking-wide">Escriba para filtrar la base completa, o seleccione directamente una Familia.</p>
             
-            <div class="relative max-w-3xl mb-8" id="search-bar-container">
+            <div class="relative max-w-3xl mb-8">
                 <i class="fa-solid fa-search absolute left-5 top-1/2 -translate-y-1/2 text-indigo-500 text-lg"></i>
                 <input type="text" id="pre-live-search" onkeyup="handlePreLiveSearch(this.value)" placeholder="Escriba material, modelo, serie o categoría..." class="filter-input pl-12 font-semibold text-slate-700 bg-white border-2 border-indigo-200 focus:border-indigo-500 shadow-md">
             </div>
 
-            <div id="grid-families" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
-        </section>
-
-        <section id="view-categories" class="view-section">
-            <h2 id="title-categories" class="text-2xl font-black text-slate-800 uppercase mb-6"></h2>
-            <div id="grid-categories" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+            <div id="grid-search-families" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </section>
 
         <section id="view-search-table" class="view-section">
@@ -147,6 +163,39 @@
             <div id="table-master-container" class="table-container shadow-lg border-t-4 border-indigo-500"></div>
         </section>
 
+        <section id="view-families" class="view-section">
+            <h2 id="title-families" class="text-2xl font-black text-slate-800 uppercase mb-1"></h2>
+            <p class="text-xs font-bold text-slate-400 mb-6 tracking-wide" id="subtitle-families">Seleccione una familia para explorar.</p>
+            
+            <div class="relative max-w-3xl mb-8" id="search-bar-container">
+                <i class="fa-solid fa-search absolute left-5 top-1/2 -translate-y-1/2 text-indigo-500 text-lg"></i>
+                <input type="text" id="inventario-pre-search" onkeyup="handlePreLiveSearch(this.value)" placeholder="Buscar..." class="filter-input pl-12 font-semibold text-slate-700 bg-white border-2 border-indigo-200 focus:border-indigo-500 shadow-md">
+            </div>
+
+            <div id="grid-families" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="view-categories" class="view-section">
+            <h2 id="title-categories" class="text-2xl font-black text-slate-800 uppercase mb-6"></h2>
+            <div id="grid-categories" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="view-subcategories" class="view-section">
+            <h2 id="title-subcategories" class="text-2xl font-black text-slate-800 uppercase mb-6"></h2>
+            <div id="grid-subcategories" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <section id="view-materials" class="view-section">
+            <div class="mb-6 space-y-4">
+                <h2 id="title-materials" class="text-2xl font-black text-slate-800 uppercase mb-1"></h2>
+                <div class="relative max-w-md">
+                    <i class="fa-solid fa-filter absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="search-materials" onkeyup="searchMaterials(this.value)" placeholder="Filtrar en esta lista específica..." class="filter-input pl-10 py-2">
+                </div>
+            </div>
+            <div id="table-materials-container" class="table-container"></div>
+        </section>
+
         <section id="view-detail" class="view-section">
             <div id="item-ficha" class="max-w-4xl mx-auto"></div>
         </section>
@@ -162,7 +211,7 @@
         let currentFilteredData = [];
         let chartInstances = {};
         
-        // Variables Globales de Filtros de Tabla
+        // Variables Globales
         let masterSearchText = "";
         let masterHeaderFilters = { Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
         let currentSort = { column: 'ID', asc: true };
@@ -206,12 +255,17 @@
         function startNav(title, query) { navStack = [{ title, query, view: 'families', isMasterSearch: false }]; processNavState(); }
         function pushNav(title, query, view) { navStack.push({ title, query: { ...navStack[navStack.length-1].query, ...query }, view }); processNavState(); }
 
-        // Acceso directo a la tabla desde KPIs o Gráficos
+        // Nueva función dedicada a abrir tablas directamente desde las tarjetas interactivas
         function openTableFromKPI(title, query) {
             masterSearchText = "";
             document.getElementById('master-live-search').value = "";
             masterHeaderFilters = { Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
-            navStack = [{ title: title, query: query, view: 'search-table' }];
+            
+            // Creamos un path limpio para que el usuario pueda volver atrás lógicamente
+            navStack = [
+                { title: 'Buscador', query: {}, view: 'search-families', isMasterSearch: true },
+                { title: title, query: query, view: 'search-table' }
+            ];
             processNavState();
         }
 
@@ -219,7 +273,6 @@
             if (navStack.length === 0) return;
             let current = navStack[navStack.length - 1];
             
-            // Filtrado Contextual de la Base de Datos
             currentFilteredData = rawData.filter(item => {
                 for (let key in current.query) {
                     if (key === 'Riesgo') { if (!["Perdido", "Vendido", "Pendiente"].includes(item.Estado)) return false; } 
@@ -227,7 +280,6 @@
                 } return true;
             });
 
-            // Breadcrumbs
             let breadHtml = `<span class="breadcrumb-item"><span class="breadcrumb-link" onclick="popNav(-1)">Home</span></span>`;
             navStack.forEach((step, idx) => {
                 breadHtml += `<span class="breadcrumb-item ${idx === navStack.length - 1 ? 'text-white' : ''}">
@@ -236,100 +288,101 @@
             });
             document.getElementById('breadcrumb-path').innerHTML = breadHtml;
 
-            // Gestionar UI de Vistas
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.getElementById('view-' + current.view).classList.add('active');
             window.scrollTo(0,0);
 
-            // Ruteo a Renderizadores
             if (current.view === 'families') { renderFamiliesGrid(current.isMasterSearch); }
             else if (current.view === 'categories') { document.getElementById('title-categories').innerText = current.title; renderCategoriesGrid(); }
             else if (current.view === 'search-table') { document.getElementById('title-master-table').innerText = current.title; applyMasterTableFilters(); }
             else if (current.view === 'detail') { renderDetail(); }
+            else if (current.view === 'search-families') { renderSearchFamilies(); }
         }
 
-        // --- FLUJO UNIFICADO DE FAMILIAS ---
+        // --- FLUJO UNIFICADO ---
         function openMasterSearch() {
             masterSearchText = "";
             document.getElementById('pre-live-search').value = "";
             document.getElementById('master-live-search').value = "";
             masterHeaderFilters = { Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
-            navStack = [{ title: 'Buscador Maestro', query: {}, view: 'families', isMasterSearch: true }];
+            navStack = [{ title: 'Buscador Maestro', query: {}, view: 'search-families', isMasterSearch: true }];
             processNavState();
         }
 
         function handlePreLiveSearch(val) {
             masterSearchText = val.toLowerCase();
-            renderFamiliesGrid(true); // Redibuja tarjetas
+            if (document.getElementById('view-search-families').classList.contains('active')) {
+                renderSearchFamilies();
+            } else {
+                renderFamiliesGrid(false);
+            }
+        }
+
+        function renderSearchFamilies() {
+            const families = [...new Set(rawData.map(i => i.Familia || 'Sin Familia'))].sort();
+            
+            let totalMatch = rawData.filter(i => {
+                if(!masterSearchText) return true;
+                let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''}`.toLowerCase();
+                return str.includes(masterSearchText);
+            }).length;
+
+            let html = `
+                <div onclick="goToMasterTable('', 'Búsqueda Global')" class="glass-card p-6 flex justify-between items-center bg-indigo-600 text-white hover:bg-indigo-700 shadow-md">
+                    <div><h4 class="font-bold text-lg">Toda la Base de Datos</h4><p class="text-[10px] text-indigo-200 uppercase font-bold">${totalMatch} Resultados</p></div>
+                    <i class="fa-solid fa-globe text-indigo-300 text-2xl"></i>
+                </div>
+            `;
+            
+            families.forEach(f => {
+                let count = rawData.filter(i => {
+                    if ((i.Familia || 'Sin Familia') !== f) return false;
+                    if(!masterSearchText) return true;
+                    let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''}`.toLowerCase();
+                    return str.includes(masterSearchText);
+                }).length;
+
+                if (masterSearchText && count === 0) return;
+
+                html += `
+                <div onclick="goToMasterTable('${f}', 'Familia: ${f}')" class="glass-card p-6 flex justify-between items-center group border-l-4 border-indigo-400">
+                    <div><h4 class="font-bold text-slate-700">${f}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${count} Activos</p></div>
+                    <i class="fa-solid fa-folder-open text-slate-200 group-hover:text-indigo-600"></i>
+                </div>`;
+            });
+            document.getElementById('grid-search-families').innerHTML = html;
         }
 
         function renderFamiliesGrid(isMasterSearch) {
             const current = navStack[navStack.length - 1];
             document.getElementById('title-families').innerText = current.title;
+            document.getElementById('search-bar-container').style.display = 'none'; // En Inventario normal no mostramos buscador global aquí
             
-            // Control visual: Si es Inventario General ocultamos barra, si es Buscador Maestro la mostramos
-            document.getElementById('search-bar-container').style.display = isMasterSearch ? 'block' : 'none';
-            document.getElementById('subtitle-families').innerText = isMasterSearch ? "Escriba para filtrar la base completa, o seleccione directamente una Familia." : "Seleccione una familia para explorar sus categorías.";
-
             const families = [...new Set(rawData.map(i => i.Familia || 'Sin Familia'))].sort();
             let html = "";
 
-            // Botón de Búsqueda Global solo visible en Buscador Maestro
-            if (isMasterSearch) {
-                let totalMatch = rawData.filter(i => {
-                    if(!masterSearchText) return true;
-                    let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''} ${i.Familia||''}`.toLowerCase();
-                    return str.includes(masterSearchText);
-                }).length;
-
-                html += `
-                    <div onclick="goToMasterTable('', 'Búsqueda Global')" class="glass-card p-6 flex justify-between items-center bg-indigo-600 text-white hover:bg-indigo-700 shadow-md">
-                        <div><h4 class="font-bold text-lg">Toda la Base de Datos</h4><p class="text-[10px] text-indigo-200 uppercase font-bold">${totalMatch} Resultados</p></div>
-                        <i class="fa-solid fa-globe text-indigo-300 text-2xl"></i>
-                    </div>
-                `;
-            }
-
             families.forEach(f => {
-                // Cálculo dinámico de conteo
-                let count = currentFilteredData.filter(i => {
-                    if ((i.Familia || 'Sin Familia') !== f) return false;
-                    if (isMasterSearch && masterSearchText) {
-                        let str = `${i.Modelo||''} ${i.Marca||''} ${i.Categoria||''} ${i['N Serie']||''}`.toLowerCase();
-                        return str.includes(masterSearchText);
-                    }
-                    return true;
-                }).length;
-
-                if (isMasterSearch && masterSearchText && count === 0) return; // Ocultar si no hay matches
-
-                // Si viene del Inventario General, ir a Categorías. Si viene del Buscador, ir a la Tabla.
-                let onclickAction = isMasterSearch ? `goToMasterTable('${f}', 'Familia: ${f}')` : `pushNav('${f}', {Familia: '${f}'}, 'categories')`;
-                let icon = isMasterSearch ? "fa-search text-slate-200" : "fa-layer-group text-indigo-200";
-
+                let count = currentFilteredData.filter(i => (i.Familia || 'Sin Familia') === f).length;
                 html += `
-                <div onclick="${onclickAction}" class="glass-card p-6 flex justify-between items-center group ${isMasterSearch ? 'border-l-4 border-indigo-400' : ''}">
+                <div onclick="pushNav('${f}', {Familia: '${f}'}, 'categories')" class="glass-card p-6 flex justify-between items-center group">
                     <div><h4 class="font-bold text-slate-700">${f}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${count} Activos</p></div>
-                    <i class="fa-solid ${icon} group-hover:text-indigo-600 text-xl"></i>
+                    <i class="fa-solid fa-layer-group text-slate-200 group-hover:text-indigo-600 text-xl"></i>
                 </div>`;
             });
-
             document.getElementById('grid-families').innerHTML = html;
         }
 
-        // --- FLUJO DE CATEGORÍAS (Saltando directo a la Tabla Maestra) ---
         function renderCategoriesGrid() {
             const cats = [...new Set(currentFilteredData.map(i => i.Categoria))].sort();
             
             document.getElementById('grid-categories').innerHTML = cats.map(c => `
-                <div onclick="openTableFromCategory('${c}')" class="glass-card p-6 flex justify-between items-center group">
+                <div onclick="openTableFromCategory('${c}')" class="glass-card p-6 flex justify-between items-center group border-l-4 border-indigo-400">
                     <div><h4 class="font-bold text-slate-700">${c}</h4><p class="text-[10px] text-indigo-500 uppercase font-bold">${currentFilteredData.filter(i=>i.Categoria===c).length} Items</p></div>
                     <i class="fa-solid fa-table text-slate-200 group-hover:text-indigo-600 text-xl"></i>
                 </div>`).join('');
         }
 
         function openTableFromCategory(cat) {
-            // Resetea filtros locales y abre la tabla
             masterSearchText = "";
             document.getElementById('master-live-search').value = "";
             masterHeaderFilters = { Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
@@ -388,7 +441,6 @@
         }
 
         function buildHeaderSelect(column) {
-            // Opciones basadas estrictamente en la familia/categoría actual visualizada
             let options = [...new Set(currentFilteredData.map(i => i[column] || '').filter(Boolean))].sort();
             let currentVal = masterHeaderFilters[column] || "";
             let html = `<select class="header-select" onchange="updateHeaderFilter('${column}', this.value)">`;
@@ -483,7 +535,7 @@
                 </div>`;
         }
 
-        // --- DASHBOARD CHARTS ---
+        // --- DASHBOARD CHARTS (COMPLETAMENTE INTERACTIVOS) ---
         function updateDashboard() {
             document.getElementById('kpi-total').innerText = rawData.length;
             document.getElementById('kpi-op').innerText = rawData.filter(i => i.Estado.includes("Operacion")).length;
@@ -503,7 +555,10 @@
                 data: { labels: estLabels, datasets: [{ data: estData, backgroundColor: estLabels.map(getCol), borderRadius: 4 }] }, 
                 options: {
                     indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    onClick: (e, el) => { if(el.length) openTableFromKPI('Estado: ' + estLabels[el[0].index], { Estado: estLabels[el[0].index] }); }
+                    onClick: (e, el) => { 
+                        if(el.length) openTableFromKPI('Estado: ' + estLabels[el[0].index], { Estado: estLabels[el[0].index] }); 
+                        else openTableFromKPI('Todos los Estados', {}); // Clic en el fondo abre tabla general
+                    }
                 } 
             });
 
@@ -512,7 +567,10 @@
                 type:'doughnut', 
                 data:{ labels:sucLabels, datasets:[{data:Object.values(gc('Sucursal Responsable')), backgroundColor:['#6366f1','#10b981','#f59e0b']}] }, 
                 options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}},
-                onClick: (e, el) => { if(el.length) openTableFromKPI('Sede: ' + sucLabels[el[0].index], { 'Sucursal Responsable': sucLabels[el[0].index] }); }} 
+                onClick: (e, el) => { 
+                    if(el.length) openTableFromKPI('Sede: ' + sucLabels[el[0].index], { 'Sucursal Responsable': sucLabels[el[0].index] }); 
+                    else openTableFromKPI('Todas las Sedes', {});
+                }} 
             });
             
             let ubi = gc('Ubicacion Fisica'), topUbi = Object.entries(ubi).sort((a,b)=>b[1]-a[1]).slice(0,5);
@@ -520,20 +578,22 @@
                 type:'pie', 
                 data:{ labels:topUbi.map(u=>u[0]), datasets:[{data:topUbi.map(u=>u[1]), backgroundColor:['#8b5cf6','#ec4899','#14b8a6','#f97316','#0ea5e9']}] }, 
                 options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:9}}}},
-                onClick: (e, el) => { if(el.length) openTableFromKPI('Bodega: ' + topUbi[el[0].index][0], { 'Ubicacion Fisica': topUbi[el[0].index][0] }); }} 
+                onClick: (e, el) => { 
+                    if(el.length) openTableFromKPI('Bodega: ' + topUbi[el[0].index][0], { 'Ubicacion Fisica': topUbi[el[0].index][0] }); 
+                    else openTableFromKPI('Todas las Bodegas', {});
+                }} 
             });
             
             let fam = gc('Familia');
             let famLabels = Object.keys(fam);
             chartInstances.cat = new Chart(document.getElementById('chartCat'), { 
                 type:'bar', 
-                data:{ labels:famLabels.map(c=>c.substring(0,10)), datasets:[{data:Object.values(fam), backgroundColor:'#6366f1'}] }, 
+                data:{ labels:famLabels.map(c=>c.substring(0,10)), datasets:[{data:Object.values(fam), backgroundColor:'#6366f1', borderRadius: 4}] }, 
                 options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}},
-                onClick: (e, el) => { if(el.length) {
-                    masterSearchText = ""; document.getElementById('master-live-search').value = ""; masterHeaderFilters = { Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
-                    navStack = [{ title: 'Inventario', query: {}, view: 'families', isMasterSearch: false }, { title: 'Familia: ' + famLabels[el[0].index], query: {Familia: famLabels[el[0].index]}, view: 'search-table' }];
-                    processNavState();
-                }}} 
+                onClick: (e, el) => { 
+                    if(el.length) openTableFromKPI('Familia: ' + famLabels[el[0].index], { Familia: famLabels[el[0].index] });
+                    else openTableFromKPI('Todas las Familias', {});
+                }} 
             });
         }
 
