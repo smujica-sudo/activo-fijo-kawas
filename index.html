@@ -92,17 +92,28 @@
     <div id="loading-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] hidden flex-col justify-center items-center text-white">
         <i class="fa-solid fa-circle-notch fa-spin text-5xl mb-4 text-indigo-400"></i>
         <h2 class="text-xl font-bold tracking-widest uppercase">Guardando Datos...</h2>
-        <p class="text-sm opacity-80">Conectando con Google Sheets</p>
+        <p class="text-sm opacity-80">Conectando con base de datos</p>
     </div>
 
     <main class="container mx-auto px-4 py-6">
 
         <section id="view-dashboard" class="view-section active">
             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-wrap gap-4 items-end">
-                <div class="flex-grow min-w-[150px]"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Filtrar Dashboard: Familia</label><select id="dash-filter-familia" onchange="applyDashboardFilters()" class="w-full p-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50 font-semibold text-slate-700"></select></div>
-                <div class="flex-grow min-w-[150px]"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Categoría</label><select id="dash-filter-categoria" onchange="applyDashboardFilters()" class="w-full p-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50 font-semibold text-slate-700"></select></div>
-                <div class="flex-grow min-w-[150px]"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Sucursal Responsable</label><select id="dash-filter-sucursal" onchange="applyDashboardFilters()" class="w-full p-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50 font-semibold text-slate-700"></select></div>
-                <div><button onclick="resetDashboardFilters()" class="h-[34px] px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-colors border border-slate-200"><i class="fa-solid fa-eraser"></i></button></div>
+                <div class="flex-grow min-w-[150px]">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Filtrar Dashboard: Familia</label>
+                    <select id="dash-filter-familia" onchange="applyDashboardFilters()" class="w-full p-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50 font-semibold text-slate-700"></select>
+                </div>
+                <div class="flex-grow min-w-[150px]">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Categoría</label>
+                    <select id="dash-filter-categoria" onchange="applyDashboardFilters()" class="w-full p-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50 font-semibold text-slate-700"></select>
+                </div>
+                <div class="flex-grow min-w-[150px]">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Sucursal Responsable</label>
+                    <select id="dash-filter-sucursal" onchange="applyDashboardFilters()" class="w-full p-2 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-500 bg-slate-50 font-semibold text-slate-700"></select>
+                </div>
+                <div>
+                    <button onclick="resetDashboardFilters()" class="h-[34px] px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-colors border border-slate-200" title="Limpiar Filtros"><i class="fa-solid fa-eraser"></i></button>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -142,7 +153,7 @@
                     <div class="h-48 relative cursor-pointer"><canvas id="chartSucursal"></canvas></div>
                 </div>
                 <div class="glass-card-static p-5 flex flex-col group">
-                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Bodegas</h3></div>
+                    <div class="flex justify-between items-start mb-3"><h3 class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><i class="fa-solid fa-filter text-indigo-300"></i> Top Bodegas</h3></div>
                     <div class="grid grid-cols-2 gap-2 mb-3"><select id="flt-fisica-fam" onchange="updateLocalChart('fisica')" class="chart-select"><option value="">-- Familia --</option></select><select id="flt-fisica-est" onchange="updateLocalChart('fisica')" class="chart-select"><option value="">-- Estado --</option></select></div>
                     <div class="h-48 relative cursor-pointer"><canvas id="chartFisica"></canvas></div>
                 </div>
@@ -164,7 +175,7 @@
                     <div class="grid grid-cols-3 gap-2 relative z-10">
                         <div class="bg-white/60 p-2 rounded-lg border border-blue-100 text-center"><p class="text-[8px] font-bold text-blue-600 uppercase mb-1">Global</p><div id="kpi-roa-global" class="text-lg font-black text-slate-700">---</div></div>
                         <div class="bg-white/60 p-2 rounded-lg border border-blue-100 text-center"><p class="text-[8px] font-bold text-blue-600 uppercase mb-1">Línea Arriendo</p><div id="kpi-roa-linea" class="text-lg font-black text-slate-700">---</div></div>
-                        <div class="bg-blue-600 p-2 rounded-lg border border-blue-700 text-center"><p class="text-[8px] font-black text-blue-200 uppercase mb-1">Arrendados</p><div id="kpi-roa-arrendados" class="text-lg font-black text-white">---</div></div>
+                        <div class="bg-blue-600 p-2 rounded-lg border border-blue-700 text-center shadow-inner"><p class="text-[8px] font-black text-blue-200 uppercase mb-1">Arrendados</p><div id="kpi-roa-arrendados" class="text-lg font-black text-white">---</div></div>
                     </div>
                 </div>
             </div>
@@ -209,7 +220,9 @@
         </section>
 
         <section id="view-search-table" class="view-section">
-            <div class="mb-4"><h2 id="title-master-table" class="text-2xl font-black text-slate-800 uppercase mb-1 text-indigo-700"></h2></div>
+            <div class="mb-4">
+                <h2 id="title-master-table" class="text-2xl font-black text-slate-800 uppercase mb-1 text-indigo-700"></h2>
+            </div>
             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-4">
                 <div class="flex flex-col md:flex-row gap-4 md:items-end">
                     <div class="w-full md:w-1/3">
@@ -230,7 +243,10 @@
 
         <section id="view-detail" class="view-section">
             <div class="max-w-5xl mx-auto flex flex-col md:flex-row gap-6">
-                <div class="flex-grow"><div class="glass-card-static overflow-hidden shadow-2xl bg-white" id="ficha-container"></div></div>
+                <div class="flex-grow">
+                    <div class="glass-card-static overflow-hidden shadow-2xl bg-white" id="ficha-container">
+                        </div>
+                </div>
                 <aside class="w-full md:w-80 flex-shrink-0">
                     <div class="glass-card-static p-6 h-full flex flex-col bg-slate-50">
                         <h3 class="text-sm font-black text-slate-700 uppercase mb-4 flex items-center gap-2 border-b border-slate-200 pb-3"><i class="fa-solid fa-clock-rotate-left text-indigo-500"></i> Historial</h3>
@@ -249,7 +265,8 @@
                     <h2 class="text-2xl font-black uppercase tracking-tight">Agregar Nuevo Activo</h2>
                     <p class="text-xs uppercase opacity-90 mt-1">Complete los datos para ingresar un equipo al sistema</p>
                 </div>
-                <div class="p-6 md:p-8" id="new-form-container"></div>
+                <div class="p-6 md:p-8" id="new-form-container">
+                    </div>
             </div>
         </section>
 
@@ -259,9 +276,11 @@
         // PEGA AQUÍ TU URL (Asegúrate de que termina en /exec)
         const API_URL = 'https://script.google.com/macros/s/AKfycby36cA1fdHcHZBlq3ZXh65qXzgX_c1ujI-c296gMt3e_SfzPA3tC6Mqu55DAmFeJvwj/exec'; 
         
+        // --- CONSTANTES FINANCIERAS ---
         const VALOR_UF = 39500; 
         const TASA_DEPRECIACION_ANUAL = 0.20; 
         
+        // --- VARIABLES GLOBALES ---
         let rawData = [];
         let navStack = []; 
         let currentNavIndex = -1;
@@ -269,8 +288,10 @@
         
         let currentFilteredData = [];
         let chartInstances = {};
+        
         let dashboardFilteredData = [];
         let dashboardFilters = { Familia: "", 'Sucursal Responsable': "", Categoria: "" };
+        
         let masterSearchText = "";
         let masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "" };
         let currentSort = { column: 'ID', asc: true };
@@ -302,13 +323,15 @@
 
         window.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: true});
         window.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; touchEndY = e.changedTouches[0].screenY; handleGesture(); }, {passive: true});
+        
         let isMouseDown = false;
         window.addEventListener('mousedown', e => { isMouseDown = true; touchStartX = e.screenX; touchStartY = e.screenY; });
         window.addEventListener('mouseup', e => { if (!isMouseDown) return; isMouseDown = false; touchEndX = e.screenX; touchEndY = e.screenY; handleGesture(); });
 
-        // --- SISTEMA FINANCIERO ---
+        // --- UTILIDADES FINANCIERAS ---
         function getMarketValue(item) {
-            let val = 0; const targetKeys = ['Valor de Mercado Estimado', 'Valor Mercado', 'Valor Estimado', 'Valor'];
+            let val = 0; 
+            const targetKeys = ['Valor de Mercado Estimado', 'Valor Mercado', 'Valor Estimado', 'Valor'];
             for (let k of targetKeys) { if (item[k] !== undefined && item[k] !== "") { val = item[k]; break; } }
             if (!val) { for (let k in item) { if (k.toLowerCase().includes('valor') && k.toLowerCase().includes('mercado')) { val = item[k]; break; } } }
             if (!val) return 0;
@@ -316,25 +339,39 @@
             if (typeof val === 'string') { return parseFloat(val.replace(/\$|\s/g, '').replace(/\./g, '').replace(',', '.')) || 0; }
             return 0;
         }
-        function formatCurrency(val) { let num = parseFloat(val); if (isNaN(num)) return val || '---'; return '$' + Math.round(num).toLocaleString('es-CL'); }
 
+        function formatCurrency(val) { 
+            let num = parseFloat(val); 
+            if (isNaN(num)) return val || '---'; 
+            return '$' + Math.round(num).toLocaleString('es-CL'); 
+        }
+
+        // --- INICIALIZACIÓN Y CONEXIÓN API ---
         async function init() { await forceSync(false); }
 
         async function forceSync(manual = true) {
-            const syncIcon = document.getElementById('sync-icon'); if (manual) syncIcon.classList.add('fa-spin'); 
+            const syncIcon = document.getElementById('sync-icon'); 
+            if (manual) syncIcon.classList.add('fa-spin'); 
             try {
-                const res = await fetch(API_URL); rawData = await res.json();
+                const res = await fetch(API_URL); 
+                rawData = await res.json();
                 
                 const countEl = document.getElementById('items-count');
                 if (countEl) countEl.innerText = rawData.length;
                 
-                initDashboardFilters(); initLocalChartFilters(); updateDashboard();
+                initDashboardFilters(); 
+                initLocalChartFilters(); 
+                updateDashboard();
                 if (currentNavIndex > -1) processNavState(); 
-            } catch (e) { console.error("Error API:", e); if (manual) alert("Error al sincronizar."); } 
-            finally { if (manual) syncIcon.classList.remove('fa-spin'); }
+            } catch (e) { 
+                console.error("Error API:", e); 
+                if (manual) alert("Error al sincronizar con la base de datos."); 
+            } finally { 
+                if (manual) syncIcon.classList.remove('fa-spin'); 
+            }
         }
 
-        // --- FUNCIONES DEL DASHBOARD (RESTITUIDAS) ---
+        // --- FUNCIONES DEL DASHBOARD BI ---
         function initDashboardFilters() {
             const buildOpts = (key, id) => {
                 const el = document.getElementById(id);
@@ -416,6 +453,7 @@
             updateAllLocalCharts();
         }
 
+        // --- GRÁFICOS LOCALES ---
         function initLocalChartFilters() {
             const popSelect = (id, key) => {
                 const el = document.getElementById(id);
@@ -516,7 +554,7 @@
             }
         }
 
-        // --- NAVEGACIÓN Y TABLAS ---
+        // --- SISTEMA NAVEGACIÓN ---
         function popNav(index) {
             isBackNav = index < currentNavIndex; currentNavIndex = index;
             if (currentNavIndex === -1) {
@@ -589,7 +627,7 @@
             else if (current.view === 'form') { renderNewForm(); }
         }
 
-        // --- FUNCIONES CRUD Y TABLAS ---
+        // --- FUNCIONES CRUD ---
         function renderNewForm() {
             let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
             EDITABLE_FIELDS.forEach(f => {
@@ -600,10 +638,7 @@
                     html += `</select></div>`;
                 } else { html += `<input type="${f.type==='number'?'number':'text'}" id="new-${f.id}" class="form-input" placeholder="Ingrese ${f.label.toLowerCase()}..."></div>`; }
             });
-            html += `</div><div class="mt-8 flex gap-3">
-                <button onclick="popNav(currentNavIndex - 1)" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl transition-colors">Cancelar</button>
-                <button onclick="submitNewItem()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg transition-colors"><i class="fa-solid fa-save mr-2"></i> Guardar Activo</button>
-            </div>`;
+            html += `</div><div class="mt-8 flex gap-3"><button onclick="popNav(currentNavIndex - 1)" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl transition-colors">Cancelar</button><button onclick="submitNewItem()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg transition-colors"><i class="fa-solid fa-save mr-2"></i> Guardar Activo</button></div>`;
             document.getElementById('new-form-container').innerHTML = html;
         }
 
@@ -666,7 +701,7 @@
             html += `</div>`; document.getElementById('ficha-container').innerHTML = html;
         }
 
-        // --- FUNCIONES EXTRA DE TABLA ---
+        // --- BÚSQUEDA Y TABLAS ---
         function handlePreLiveSearch(val) { masterSearchText = val.toLowerCase(); renderSearchFamilies(); }
         function renderSearchFamilies() {
             const families = [...new Set(rawData.map(i => i.Familia || 'Sin Familia'))].sort();
@@ -730,6 +765,7 @@
             }
             container.innerHTML = html + `</tbody></table>`;
         }
+        
         window.onload = init;
     </script>
 </body>
