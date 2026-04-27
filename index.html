@@ -49,9 +49,6 @@
         .timeline-item::after { content: ''; position: absolute; left: 0.2rem; top: 0.75rem; bottom: -1rem; width: 2px; background-color: #e2e8f0; }
         .timeline-item:last-child::after { display: none; }
 
-        .fab-button { position: fixed; bottom: 2rem; right: 2rem; z-index: 50; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); transition: transform 0.2s; }
-        .fab-button:hover { transform: scale(1.05); }
-
         .chart-select { width: 100%; padding: 0.25rem 0.5rem; font-size: 0.6rem; text-transform: uppercase; border: 1px solid #e2e8f0; border-radius: 0.375rem; background: #f8fafc; outline: none; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s; }
         .chart-select:hover { border-color: #cbd5e1; background: white; }
         .chart-select:focus { border-color: #6366f1; color: #4f46e5; }
@@ -303,15 +300,25 @@
         let masterHeaderFilters = { Familia: "", Categoria: "", Marca: "", Estado: "", 'Sucursal Responsable': "", 'Ubicacion Fisica': "" };
         let currentSort = { column: 'ID', asc: true };
 
+        // --- DEFINICIÓN DE CAMPOS DEL FORMULARIO ---
+        // allowNew: true permite agregar opciones que no están en la lista.
+        // dynamic: true escanea la base de datos para armar la lista.
         const EDITABLE_FIELDS = [
-            {id: 'Familia', label: 'Familia', type: 'text'}, {id: 'Categoria', label: 'Categoría', type: 'text'}, {id: 'Marca', label: 'Marca', type: 'text'},
-            {id: 'Modelo', label: 'Modelo', type: 'text'}, {id: 'N Serie', label: 'Número de Serie', type: 'text'},
+            {id: 'Familia', label: 'Familia', type: 'select', dynamic: true, allowNew: true}, 
+            {id: 'Categoria', label: 'Categoría', type: 'select', dynamic: true, allowNew: true}, 
+            {id: 'Marca', label: 'Marca', type: 'select', dynamic: true, allowNew: true},
+            {id: 'Modelo', label: 'Modelo', type: 'select', dynamic: true, allowNew: true}, 
+            {id: 'N Serie', label: 'Número de Serie', type: 'text'},
             {id: 'Estado', label: 'Estado Operativo', type: 'select', baseOptions: ['Uso Operacion', 'En Mantencion', 'Perdido', 'Vendido', 'Pendiente', 'Bodega Base']},
             {id: 'Condicion', label: 'Condición', type: 'select', baseOptions: ['Operativo', 'Malo', 'Regular', 'Nuevo']},
-            {id: 'Sucursal Responsable', label: 'Sucursal Responsable', type: 'text'}, {id: 'Ubicacion Fisica', label: 'Ubicación Física', type: 'text'},
-            {id: 'Contrato', label: 'Tipo de Contrato', type: 'text'}, {id: 'Proveedor', label: 'Proveedor', type: 'text'},
-            {id: 'N° GUIA / FAC', label: 'Guía / Factura', type: 'text'}, {id: 'Fecha Adquisicion', label: 'Fecha Adquisición', type: 'text'},
-            {id: 'Valor de Mercado Estimado', label: 'Valor Estimado ($)', type: 'number'}, {id: 'Observaciones', label: 'Observaciones', type: 'text'}
+            {id: 'Sucursal Responsable', label: 'Sucursal Responsable', type: 'select', dynamic: true, allowNew: true}, 
+            {id: 'Ubicacion Fisica', label: 'Ubicación Física', type: 'select', dynamic: true, allowNew: true},
+            {id: 'Contrato', label: 'Tipo de Contrato', type: 'select', dynamic: true, allowNew: true}, 
+            {id: 'Proveedor', label: 'Proveedor', type: 'select', dynamic: true, allowNew: true},
+            {id: 'N° GUIA / FAC', label: 'Guía / Factura', type: 'text'}, 
+            {id: 'Fecha Adquisicion', label: 'Fecha Adquisición', type: 'text'},
+            {id: 'Valor de Mercado Estimado', label: 'Valor Estimado ($)', type: 'number'}, 
+            {id: 'Observaciones', label: 'Observaciones', type: 'text'}
         ];
 
         // --- GESTOS SWIPE IOS ---
@@ -353,7 +360,7 @@
             return '$' + Math.round(num).toLocaleString('es-CL'); 
         }
 
-        // --- INICIALIZACIÓN Y CONEXIÓN API (STALE-WHILE-REVALIDATE) ---
+        // --- INICIALIZACIÓN Y CONEXIÓN API ---
         async function init() { 
             const cachedData = localStorage.getItem('siaf_rawData');
             if (cachedData) {
@@ -708,27 +715,57 @@
             else if (current.view === 'form') { renderNewForm(); }
         }
 
-        // --- FUNCIONES CRUD ---
+        // --- FUNCIONES CRUD (FORMULARIOS DINÁMICOS) ---
         function renderNewForm() {
             let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
             EDITABLE_FIELDS.forEach(f => {
                 html += `<div><label class="form-label">${f.label}</label>`;
                 if (f.type === 'select') {
-                    html += `<select id="new-${f.id}" class="form-input"><option value="">-- Seleccionar --</option>`;
+                    // Lógica onchange para mostrar el input escondido si se elige "Agregar Nuevo..."
+                    html += `<select id="new-${f.id}" class="form-input" onchange="const newInp = document.getElementById('new-${f.id}-new'); if(this.value === '___NEW___') { newInp.classList.remove('hidden'); newInp.focus(); } else { newInp.classList.add('hidden'); }">`;
+                    html += `<option value="">-- Seleccionar --</option>`;
                     
-                    let dbOptions = rawData.map(i => i[f.id]).filter(Boolean);
+                    // Extraer valores únicos de la base de datos si es dinámico
+                    let dbOptions = f.dynamic ? rawData.map(i => i[f.id]).filter(Boolean) : [];
                     let combinedOptions = [...new Set([...(f.baseOptions || []), ...dbOptions])].sort();
                     
                     combinedOptions.forEach(o => html += `<option value="${o}">${o}</option>`);
-                    html += `</select></div>`;
-                } else { html += `<input type="${f.type==='number'?'number':'text'}" id="new-${f.id}" class="form-input" placeholder="Ingrese ${f.label.toLowerCase()}..."></div>`; }
+                    
+                    // Agregar la opción de "Nuevo" al final si está permitido
+                    if(f.allowNew) {
+                        html += `<option value="___NEW___" class="font-bold text-indigo-600">➕ Agregar Nuevo...</option>`;
+                    }
+                    html += `</select>`;
+                    
+                    // Campo oculto para ingresar el nuevo valor
+                    if(f.allowNew) {
+                        html += `<input type="text" id="new-${f.id}-new" class="form-input mt-2 hidden border-indigo-400 bg-indigo-50" placeholder="Escriba aquí el nuevo valor...">`;
+                    }
+                    html += `</div>`;
+                    
+                } else { 
+                    html += `<input type="${f.type==='number'?'number':'text'}" id="new-${f.id}" class="form-input" placeholder="Ingrese ${f.label.toLowerCase()}..."></div>`; 
+                }
             });
             html += `</div><div class="mt-8 flex gap-3"><button onclick="popNav(currentNavIndex - 1)" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl transition-colors">Cancelar</button><button onclick="submitNewItem()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg transition-colors"><i class="fa-solid fa-save mr-2"></i> Guardar Activo</button></div>`;
             document.getElementById('new-form-container').innerHTML = html;
         }
 
         async function submitNewItem() {
-            let newItem = {}; EDITABLE_FIELDS.forEach(f => { newItem[f.id] = document.getElementById(`new-${f.id}`).value; });
+            let newItem = {}; 
+            EDITABLE_FIELDS.forEach(f => { 
+                let el = document.getElementById(`new-${f.id}`);
+                let val = el ? el.value : '';
+                
+                // Si eligieron "Agregar Nuevo...", capturar el valor del campo oculto
+                if(f.type === 'select' && f.allowNew && val === '___NEW___') {
+                    let newEl = document.getElementById(`new-${f.id}-new`);
+                    val = newEl ? newEl.value : '';
+                }
+                
+                newItem[f.id] = val; 
+            });
+            
             if (!newItem['Modelo'] || !newItem['Familia']) { alert("Por favor, ingrese al menos Familia y Modelo."); return; }
 
             document.getElementById('loading-overlay').style.display = 'flex';
@@ -742,7 +779,20 @@
         }
 
         async function saveEdit(id) {
-            let updatedItem = { ID: id }; EDITABLE_FIELDS.forEach(f => { let el = document.getElementById(`edit-${f.id}`); if(el) updatedItem[f.id] = el.value; });
+            let updatedItem = { ID: id }; 
+            EDITABLE_FIELDS.forEach(f => { 
+                let el = document.getElementById(`edit-${f.id}`); 
+                if(el) {
+                    let val = el.value;
+                    // Si eligieron "Agregar Nuevo...", capturar el valor del campo oculto
+                    if(f.type === 'select' && f.allowNew && val === '___NEW___') {
+                        let newEl = document.getElementById(`edit-${f.id}-new`);
+                        val = newEl ? newEl.value : '';
+                    }
+                    updatedItem[f.id] = val;
+                }
+            });
+            
             document.getElementById('loading-overlay').style.display = 'flex';
             try {
                 const res = await fetch(API_URL, { redirect: "follow", method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'UPDATE', item: updatedItem }) });
@@ -774,14 +824,32 @@
                     let val = i[f.id] || (f.id === 'Valor de Mercado Estimado' ? getMarketValue(i) : '');
                     html += `<div><label class="form-label">${f.label}</label>`;
                     if(f.type === 'select') {
-                        html += `<select id="edit-${f.id}" class="form-input"><option value="">-- Seleccionar --</option>`;
+                        html += `<select id="edit-${f.id}" class="form-input" onchange="const newInp = document.getElementById('edit-${f.id}-new'); if(this.value === '___NEW___') { newInp.classList.remove('hidden'); newInp.focus(); } else { newInp.classList.add('hidden'); }">`;
+                        html += `<option value="">-- Seleccionar --</option>`;
                         
-                        let dbOptions = rawData.map(i => i[f.id]).filter(Boolean);
+                        let dbOptions = f.dynamic ? rawData.map(item => item[f.id]).filter(Boolean) : [];
                         let combinedOptions = [...new Set([...(f.baseOptions || []), ...dbOptions])].sort();
                         
+                        // Validar si el valor actual existe en las opciones (por si fue modificado directo en Excel)
+                        if (val && !combinedOptions.includes(val)) {
+                            combinedOptions.push(val);
+                            combinedOptions.sort();
+                        }
+                        
                         combinedOptions.forEach(o => html += `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`);
-                        html += `</select></div>`;
-                    } else { html += `<input type="${f.type==='number'?'number':'text'}" id="edit-${f.id}" value="${val}" class="form-input"></div>`; }
+                        
+                        if(f.allowNew) {
+                            html += `<option value="___NEW___" class="font-bold text-indigo-600">➕ Agregar Nuevo...</option>`;
+                        }
+                        html += `</select>`;
+                        
+                        if(f.allowNew) {
+                            html += `<input type="text" id="edit-${f.id}-new" class="form-input mt-2 hidden border-indigo-400 bg-indigo-50" placeholder="Escriba aquí el nuevo valor...">`;
+                        }
+                        html += `</div>`;
+                    } else { 
+                        html += `<input type="${f.type==='number'?'number':'text'}" id="edit-${f.id}" value="${val}" class="form-input"></div>`; 
+                    }
                 });
                 html += `</div><div class="flex gap-3 mt-6"><button onclick="renderDetail(false)" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl transition-colors">Cancelar</button><button onclick="saveEdit(${i.ID})" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg transition-colors"><i class="fa-solid fa-save mr-2"></i> Guardar Cambios</button></div>`;
             } else {
